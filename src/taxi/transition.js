@@ -16,7 +16,7 @@ const taxi = new Core({
 
 
   },
-  removeOldContent: true,
+  removeOldContent: false,
 })
 
 export default taxi

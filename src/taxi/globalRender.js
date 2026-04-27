@@ -1,8 +1,11 @@
-import { Renderer } from '@unseenco/taxi';
+import { Renderer } from '@unseenco/taxi'
+import { initWorkCarrousel } from '../components/workCarrousel.js'
 
 export default class globalRender extends Renderer {
+  destroyWorkCarrousel = () => {}
+
   onEnter() {
-    // run after the new content has been added to the Taxi container
+    this.destroyWorkCarrousel = initWorkCarrousel()
   }
 
   onEnterCompleted() {
@@ -10,7 +13,8 @@ export default class globalRender extends Renderer {
   }
 
   onLeave() {
-    // run before the transition.onLeave method is called
+    this.destroyWorkCarrousel({ preserveStyles: true })
+    this.destroyWorkCarrousel = () => {}
   }
 
   onLeaveCompleted() {

@@ -218,9 +218,12 @@ export function initWorkCarrousel() {
   const removeScrollListener = addScrollListener(render)
   window.addEventListener('resize', resize)
 
-  return () => {
+  return ({ preserveStyles = false } = {}) => {
     removeScrollListener()
     window.removeEventListener('resize', resize)
+
+    if (preserveStyles) return
+
     spacer.remove()
     gsap.set(container, { clearProps: 'position,top,overflow' })
     gsap.set(list, { clearProps: 'height' })
