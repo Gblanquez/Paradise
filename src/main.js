@@ -1,3 +1,7 @@
 import './styles/style.css'
+import { initScaling } from './components/scaling.js'
+import { initWorkCarrousel } from './components/workCarrousel.js'
+import './components/scroll.js'
 
-console.log('Hello from VS Code')
+initScaling()
+initWorkCarrousel()
