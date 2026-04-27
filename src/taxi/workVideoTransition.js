@@ -1,12 +1,15 @@
 import gsap from 'gsap'
 
 const SELECTORS = {
+  contentItem: '.work-content-item',
   line: '.line-video-load',
+  lineParent: '[data-a="video-line-parent"]',
   videoParent: '.work-video-parent',
   video: '.main-workp-video',
 }
 
 let transitionLine = null
+let transitionLineParent = null
 let transitionLineTween = null
 
 function setLineProgress(progress) {
@@ -25,6 +28,7 @@ function destroyTransitionLine() {
   transitionLineTween?.kill()
   transitionLineTween = null
   transitionLine = null
+  transitionLineParent = null
 }
 
 function removeOldContent(wrapper, currentContent) {
@@ -140,16 +144,35 @@ function startVideo(video) {
   })
 }
 
+function getActiveContentItem(from) {
+  const contentItems = gsap.utils.toArray(SELECTORS.contentItem, from)
+
+  return contentItems.find((item) => {
+    const opacity = Number(gsap.getProperty(item, 'opacity'))
+    const visibility = gsap.getProperty(item, 'visibility')
+
+    return opacity > 0.5 && visibility !== 'hidden'
+  }) || contentItems[0] || from
+}
+
 export function startWorkVideoLeave(from) {
-  transitionLine = from.querySelector(SELECTORS.line)
+  const activeContentItem = getActiveContentItem(from)
+
+  transitionLine = activeContentItem.querySelector(SELECTORS.line)
+  transitionLineParent = transitionLine?.closest(SELECTORS.lineParent)
 
   if (!transitionLine) return
 
   gsap.set(transitionLine, {
     width: '0%',
-    scaleX: 1,
-    transformOrigin: 'right center',
   })
+
+  if (transitionLineParent) {
+    gsap.set(transitionLineParent, {
+      scaleX: 1,
+      transformOrigin: 'right center',
+    })
+  }
 
   transitionLineTween = gsap.to(transitionLine, {
     width: '82%',
@@ -211,11 +234,14 @@ export async function enterWorkVideo({ to, wrapper, done }) {
       duration: 0.25,
       ease: 'power2.out',
     }, 0)
-      .to(transitionLine, {
-        scaleX: 0,
-        duration: 0.65,
-        ease: 'power3.inOut',
-      }, 0.25)
+  }
+
+  if (transitionLineParent) {
+    tl.to(transitionLineParent, {
+      scaleX: 0,
+      duration: 0.65,
+      ease: 'power3.inOut',
+    }, 0.25)
   }
 
   tl.to(overlay, {
