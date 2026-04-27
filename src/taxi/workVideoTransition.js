@@ -3,7 +3,7 @@ import gsap from 'gsap'
 const SELECTORS = {
   contentItem: '.work-content-item',
   line: '.line-video-load',
-  lineParent: '[data-a="video-line-parent"]',
+  lineParent: '[data-a="line-parent"]',
   videoParent: '.work-video-parent',
   video: '.main-workp-video',
 }
