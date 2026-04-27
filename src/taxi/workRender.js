@@ -1,8 +1,11 @@
-import { Renderer } from '@unseenco/taxi';
+import { Renderer } from '@unseenco/taxi'
+import { initWorkVideoControls } from '../components/workVideoControls.js'
 
 export default class workRender extends Renderer {
+  destroyWorkVideoControls = () => {}
+
   onEnter() {
-    // run after the new content has been added to the Taxi container
+    this.destroyWorkVideoControls = initWorkVideoControls(this.content)
   }
 
   onEnterCompleted() {
@@ -10,7 +13,8 @@ export default class workRender extends Renderer {
   }
 
   onLeave() {
-    // run before the transition.onLeave method is called
+    this.destroyWorkVideoControls()
+    this.destroyWorkVideoControls = () => {}
   }
 
   onLeaveCompleted() {
