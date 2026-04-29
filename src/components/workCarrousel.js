@@ -9,6 +9,9 @@ const SELECTORS = {
   contentContainer: '.work-content-container',
   contentList: '.work-content-list',
   contentItem: '.work-content-item',
+  thumbnailsList: '.thumbnails-list',
+  thumbnailItem: '.thumbnail-item',
+  thumbnailContainer: '.thumbnail-container',
   current: '.work-current',
   length: '.work-length',
   spacer: '[data-work-carrousel-spacer]',
@@ -28,6 +31,9 @@ export function initWorkCarrousel() {
   const links = items.map((item) => item.querySelector(SELECTORS.link) || item)
   const contentList = container.querySelector(SELECTORS.contentList)
   const contentItems = gsap.utils.toArray(SELECTORS.contentItem, contentList || container)
+  const thumbnailsList = container.querySelector(SELECTORS.thumbnailsList)
+  const thumbnailItems = gsap.utils.toArray(SELECTORS.thumbnailItem, thumbnailsList || container)
+  const thumbnailContainers = thumbnailItems.map((item) => item.querySelector(SELECTORS.thumbnailContainer) || item)
   const currentEls = gsap.utils.toArray(SELECTORS.current, container)
   const lengthEls = gsap.utils.toArray(SELECTORS.length, container)
   const counterPad = Math.max(
@@ -39,12 +45,16 @@ export function initWorkCarrousel() {
   const setLinkX = links.map((link) => gsap.quickSetter(link, 'xPercent'))
   const setLinkClipPath = links.map((link) => gsap.quickSetter(link, 'clipPath'))
   const setContentOpacity = contentItems.map((item) => gsap.quickSetter(item, 'opacity'))
+  const setThumbnailOpacity = thumbnailItems.map((item) => gsap.quickSetter(item, 'opacity'))
+  const setThumbnailClipPath = thumbnailContainers.map((item) => gsap.quickSetter(item, 'clipPath'))
 
   const formatCounter = (number) => String(number).padStart(counterPad, '0')
 
   let step = window.innerHeight
   let start = 0
   let activeIndex = -1
+  let snapTimeout = null
+  let isSnapping = false
   let spacer = document.querySelector(SELECTORS.spacer)
 
   if (!spacer) {
@@ -120,6 +130,62 @@ export function initWorkCarrousel() {
         setContentOpacity[index](0)
       }
     })
+
+    thumbnailItems.forEach((item, index) => {
+      const distance = wrapDistance(index - active - 1)
+      const isIncoming = distance >= 0 && distance < 1
+      const isOutgoing = distance < 0 && distance > -1
+      const isVisible = isIncoming || isOutgoing
+
+      setThumbnailOpacity[index](isVisible ? 1 : 0)
+
+      if (isIncoming) {
+        const reveal = distance * 100
+
+        setThumbnailClipPath[index](`inset(0 0 0 ${reveal}%)`)
+        item.style.zIndex = String(thumbnailItems.length + 1)
+        return
+      }
+
+      if (isOutgoing) {
+        setThumbnailClipPath[index]('inset(0 0 0 0%)')
+        item.style.zIndex = String(thumbnailItems.length)
+        return
+      }
+
+      setThumbnailClipPath[index]('inset(0 0 0 100%)')
+      item.style.zIndex = '0'
+    })
+  }
+
+  const snapToNearestItem = () => {
+    const localScroll = lenis.scroll - start
+    const snapIndex = Math.round(localScroll / step)
+    const target = start + snapIndex * step
+
+    if (Math.abs(lenis.scroll - target) < 2) return
+
+    isSnapping = true
+    lenis.scrollTo(target, {
+      duration: 0.75,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+      onComplete: () => {
+        isSnapping = false
+      },
+    })
+  }
+
+  const scheduleSnap = ({ velocity }) => {
+    if (isSnapping) return
+
+    window.clearTimeout(snapTimeout)
+
+    if (Math.abs(velocity) > 0.02) {
+      snapTimeout = window.setTimeout(snapToNearestItem, 180)
+      return
+    }
+
+    snapTimeout = window.setTimeout(snapToNearestItem, 80)
   }
 
   if (gsap.getProperty(list, 'position') === 'static') {
@@ -152,14 +218,22 @@ export function initWorkCarrousel() {
     willChange: 'transform, clip-path',
   })
 
+  gsap.set(thumbnailContainers, {
+    willChange: 'clip-path',
+  })
+
   resize()
 
-  const removeScrollListener = addScrollListener(render)
+  const removeScrollListener = addScrollListener((scrollState) => {
+    render(scrollState)
+    scheduleSnap(scrollState)
+  })
   window.addEventListener('resize', resize)
 
   return ({ preserveStyles = false } = {}) => {
     removeScrollListener()
     window.removeEventListener('resize', resize)
+    window.clearTimeout(snapTimeout)
 
     if (preserveStyles) return
 
@@ -169,5 +243,7 @@ export function initWorkCarrousel() {
     gsap.set(items, { clearProps: 'opacity,visibility,willChange,zIndex,pointerEvents,left,top,width,height' })
     gsap.set(links, { clearProps: 'display,width,height,overflow,willChange,transform,clipPath' })
     gsap.set(contentItems, { clearProps: 'opacity,zIndex' })
+    gsap.set(thumbnailItems, { clearProps: 'opacity,zIndex' })
+    gsap.set(thumbnailContainers, { clearProps: 'willChange,clipPath' })
   }
 }
