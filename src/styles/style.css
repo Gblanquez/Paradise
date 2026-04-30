@@ -1,6 +1,6 @@
-:root{
+/* :root{
     --vw: 0.01vw;
-}
+} */
 
 *
 {
@@ -10,7 +10,7 @@
 
 html {
     font-size: calc(16 / 1728 * 100 * var(--vw));
-    line-height: 1;
+    line-height: 1.1;
     scrollbar-width: none;
   }
 
