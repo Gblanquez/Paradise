@@ -51,6 +51,7 @@ export function initProjectList(root = document) {
   const childTweens = new WeakMap()
   let activeIndex = -1
   let activeTransition = 0
+  let hoverCloseTimeout = null
   let zIndex = videoItems.length
 
   const setProjectNumbers = () => {
@@ -142,6 +143,7 @@ export function initProjectList(root = document) {
   }
 
   const onLinkEnter = (index) => {
+    window.clearTimeout(hoverCloseTimeout)
     showVideo(index)
     showHoverBox(index)
   }
@@ -162,22 +164,39 @@ export function initProjectList(root = document) {
 
   const removeListeners = links.map((link, index) => {
     const enter = () => onLinkEnter(index)
+    const leave = () => scheduleHoverClose()
 
     link.addEventListener('pointerenter', enter)
+    link.addEventListener('pointerleave', leave)
     link.addEventListener('focus', enter)
+    link.addEventListener('blur', leave)
 
     return () => {
       link.removeEventListener('pointerenter', enter)
+      link.removeEventListener('pointerleave', leave)
       link.removeEventListener('focus', enter)
+      link.removeEventListener('blur', leave)
     }
   })
 
-  const onLinksLeave = () => {
+  const closeHoverState = () => {
     showVideo(0)
     showHoverBox(-1)
   }
 
-  linksParent?.addEventListener('pointerleave', onLinksLeave)
+  const hasActiveLink = () => links.some((link) => link.matches(':hover') || link.matches(':focus-within'))
+
+  const scheduleHoverClose = () => {
+    window.clearTimeout(hoverCloseTimeout)
+
+    hoverCloseTimeout = window.setTimeout(() => {
+      if (!hasActiveLink()) {
+        closeHoverState()
+      }
+    }, 40)
+  }
+
+  linksParent?.addEventListener('pointerleave', closeHoverState)
 
   gsap.set(videoChildren, {
     willChange: 'clip-path',
@@ -195,8 +214,9 @@ export function initProjectList(root = document) {
   return () => {
     revealTweens.forEach((tween) => tween.kill())
     revealTweens.clear()
+    window.clearTimeout(hoverCloseTimeout)
     removeListeners.forEach((remove) => remove())
-    linksParent?.removeEventListener('pointerleave', onLinksLeave)
+    linksParent?.removeEventListener('pointerleave', closeHoverState)
     removeMetadataListeners.forEach((remove) => remove())
     gsap.set(allHoverBoxes, { clearProps: 'width,height' })
     gsap.set(videoItems, { clearProps: 'opacity,zIndex' })
