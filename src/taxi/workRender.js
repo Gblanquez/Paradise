@@ -9,7 +9,7 @@ export default class workRender extends Renderer {
   }
 
   onEnterCompleted() {
-     // run after the transition.onEnter has fully completed
+    // run after the transition.onEnter has fully completed
   }
 
   onLeave() {

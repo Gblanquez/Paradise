@@ -1,5 +1,4 @@
 import { Transition } from '@unseenco/taxi'
-import { enterWorkVideo, startWorkVideoLeave } from './workVideoTransition.js'
 
 export default class globalTransition extends Transition {
   /**
@@ -7,7 +6,6 @@ export default class globalTransition extends Transition {
    * @param { { from: HTMLElement, trigger: string|HTMLElement|false, done: function } } props
    */
   onLeave({ from, trigger, done }) {
-    startWorkVideoLeave(from)
     done()
   }
 
@@ -16,6 +14,6 @@ export default class globalTransition extends Transition {
    * @param { { to: HTMLElement, trigger: string|HTMLElement|false, done: function } } props
    */
   onEnter({ to, trigger, done }) {
-    enterWorkVideo({ to, wrapper: this.wrapper, done })
+    done()
   }
 }

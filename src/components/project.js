@@ -108,32 +108,41 @@ export function initProjectList(root = document) {
     videoItems[index].style.zIndex = String(zIndex)
     setVideoItemOpacity[index](1)
 
+    const completeReveal = () => {
+      if (transition !== activeTransition) return
+
+      videoItems.forEach((item, itemIndex) => {
+        if (itemIndex === index) {
+          item.style.zIndex = String(videoItems.length)
+          setVideoItemOpacity[itemIndex](1)
+          return
+        }
+
+        item.style.zIndex = '0'
+        setVideoItemOpacity[itemIndex](0)
+      })
+
+      zIndex = videoItems.length
+    }
+
     gsap.set(videoChildren[index], {
       clipPath: immediate ? 'inset(0 0 0 0%)' : 'inset(0 0 0 100%)',
     })
 
+    if (immediate) {
+      completeReveal()
+      activeIndex = index
+      return
+    }
+
     const revealTween = gsap.to(videoChildren[index], {
       clipPath: 'inset(0 0 0 0%)',
-      duration: immediate ? 0 : 0.8,
+      duration: 0.8,
       ease: 'power3.inOut',
       onComplete: () => {
         revealTweens.delete(revealTween)
         childTweens.delete(videoChildren[index])
-
-        if (transition !== activeTransition) return
-
-        videoItems.forEach((item, itemIndex) => {
-          if (itemIndex === index) {
-            item.style.zIndex = String(videoItems.length)
-            setVideoItemOpacity[itemIndex](1)
-            return
-          }
-
-          item.style.zIndex = '0'
-          setVideoItemOpacity[itemIndex](0)
-        })
-
-        zIndex = videoItems.length
+        completeReveal()
       },
     })
 
@@ -202,6 +211,10 @@ export function initProjectList(root = document) {
     willChange: 'clip-path',
   })
 
+  gsap.set(videoItems, {
+    pointerEvents: 'none',
+  })
+
   gsap.set(allHoverBoxes, {
     width: '0%',
     height: '100%',
@@ -219,7 +232,7 @@ export function initProjectList(root = document) {
     linksParent?.removeEventListener('pointerleave', closeHoverState)
     removeMetadataListeners.forEach((remove) => remove())
     gsap.set(allHoverBoxes, { clearProps: 'width,height' })
-    gsap.set(videoItems, { clearProps: 'opacity,zIndex' })
+    gsap.set(videoItems, { clearProps: 'opacity,zIndex,pointerEvents' })
     gsap.set(videoChildren, { clearProps: 'clipPath,willChange' })
   }
 }

@@ -1,25 +1,16 @@
 import { Renderer } from '@unseenco/taxi'
-import { initProjectList } from '../components/project.js'
-import { initWorkCarrousel } from '../components/workCarrousel.js'
 
 export default class globalRender extends Renderer {
-  destroyProjectList = () => {}
-  destroyWorkCarrousel = () => {}
-
   onEnter() {
-    this.destroyProjectList = initProjectList(this.content)
-    this.destroyWorkCarrousel = initWorkCarrousel()
+    // run after the new content has been added to the Taxi container
   }
 
   onEnterCompleted() {
-     // run after the transition.onEnter has fully completed
+    // run after the transition.onEnter has fully completed
   }
 
   onLeave() {
-    this.destroyProjectList()
-    this.destroyProjectList = () => {}
-    this.destroyWorkCarrousel({ preserveStyles: true })
-    this.destroyWorkCarrousel = () => {}
+    // run before the transition.onLeave method is called
   }
 
   onLeaveCompleted() {

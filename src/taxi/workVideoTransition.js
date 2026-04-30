@@ -1,4 +1,5 @@
 import gsap from 'gsap'
+import { removeOldContent } from './removeOldContent.js'
 
 const SELECTORS = {
   contentItem: '.work-content-item',
@@ -29,16 +30,6 @@ function destroyTransitionLine() {
   transitionLineTween = null
   transitionLine = null
   transitionLineParent = null
-}
-
-function removeOldContent(wrapper, currentContent) {
-  if (!wrapper || !currentContent) return
-
-  Array.from(wrapper.children).forEach((child) => {
-    if (child !== currentContent) {
-      child.remove()
-    }
-  })
 }
 
 function createTransitionOverlay(to) {
@@ -207,6 +198,7 @@ export async function enterWorkVideo({ to, wrapper, done }) {
     position: 'absolute',
     inset: 0,
     zIndex: 12,
+    pointerEvents: 'none',
     clipPath: 'inset(100% 0 0 0)',
     overflow: 'hidden',
     willChange: 'clip-path',
