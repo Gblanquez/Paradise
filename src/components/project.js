@@ -8,6 +8,8 @@ const SELECTORS = {
   video: '.main-thumbnail-video',
   projectNumber: '[data-a="project-number"]',
   videoTime: '[data-a="video-time"]',
+  category: '[data="category"]',
+  allCategory: '[data="all-category"]',
 }
 
 function formatIndex(index, padLength) {
@@ -33,6 +35,10 @@ function getPadLength(links) {
   return Math.max(String(links.length).length, existingLength)
 }
 
+function normalizeCategory(text) {
+  return text.trim().toLowerCase()
+}
+
 export function initProjectList(root = document) {
   const links = gsap.utils.toArray(SELECTORS.link, root)
   const videoItems = gsap.utils.toArray(SELECTORS.videoItem, root)
@@ -42,6 +48,10 @@ export function initProjectList(root = document) {
   const linksParent = links[0].parentElement
   const videoChildren = videoItems.map((item) => item.querySelector(SELECTORS.videoChild) || item)
   const videos = videoItems.map((item) => item.querySelector(SELECTORS.video))
+  const linkCategories = links.map((link) => normalizeCategory(link.querySelector(SELECTORS.category)?.textContent || ''))
+  const categoryTriggers = gsap.utils.toArray(SELECTORS.category, root)
+    .filter((trigger) => !links.some((link) => link.contains(trigger)))
+  const allCategoryTriggers = gsap.utils.toArray(SELECTORS.allCategory, root)
   const hoverBoxes = links.map((link) => gsap.utils.toArray(SELECTORS.linkHoverBox, link))
   const allHoverBoxes = hoverBoxes.flat()
   const setVideoItemOpacity = videoItems.map((item) => gsap.quickSetter(item, 'opacity'))
@@ -51,6 +61,7 @@ export function initProjectList(root = document) {
   const childTweens = new WeakMap()
   let activeIndex = -1
   let activeTransition = 0
+  let activeCategory = 'all'
   let hoverCloseTimeout = null
   let zIndex = videoItems.length
 
@@ -171,6 +182,35 @@ export function initProjectList(root = document) {
     })
   }
 
+  const setCategoryState = (category) => {
+    activeCategory = category || 'all'
+
+    links.forEach((link, index) => {
+      const isVisible = activeCategory === 'all' || linkCategories[index] === activeCategory
+
+      gsap.to(link, {
+        opacity: isVisible ? 1 : 0.5,
+        duration: 0.35,
+        ease: 'power2.out',
+        overwrite: true,
+      })
+    })
+
+    categoryTriggers.forEach((trigger) => {
+      const isActive = normalizeCategory(trigger.textContent || '') === activeCategory
+
+      trigger.classList.toggle('is-active', isActive)
+      trigger.setAttribute('aria-pressed', String(isActive))
+    })
+
+    allCategoryTriggers.forEach((trigger) => {
+      const isActive = activeCategory === 'all'
+
+      trigger.classList.toggle('is-active', isActive)
+      trigger.setAttribute('aria-pressed', String(isActive))
+    })
+  }
+
   const removeListeners = links.map((link, index) => {
     const enter = () => onLinkEnter(index)
     const leave = () => scheduleHoverClose()
@@ -187,6 +227,23 @@ export function initProjectList(root = document) {
       link.removeEventListener('blur', leave)
     }
   })
+
+  const removeCategoryListeners = [
+    ...categoryTriggers.map((trigger) => {
+      const click = () => setCategoryState(normalizeCategory(trigger.textContent || ''))
+
+      trigger.addEventListener('click', click)
+
+      return () => trigger.removeEventListener('click', click)
+    }),
+    ...allCategoryTriggers.map((trigger) => {
+      const click = () => setCategoryState('all')
+
+      trigger.addEventListener('click', click)
+
+      return () => trigger.removeEventListener('click', click)
+    }),
+  ]
 
   const closeHoverState = () => {
     showVideo(0)
@@ -222,6 +279,7 @@ export function initProjectList(root = document) {
 
   setProjectNumbers()
   setVideoTimes()
+  setCategoryState('all')
   showVideo(0, true)
 
   return () => {
@@ -229,8 +287,10 @@ export function initProjectList(root = document) {
     revealTweens.clear()
     window.clearTimeout(hoverCloseTimeout)
     removeListeners.forEach((remove) => remove())
+    removeCategoryListeners.forEach((remove) => remove())
     linksParent?.removeEventListener('pointerleave', closeHoverState)
     removeMetadataListeners.forEach((remove) => remove())
+    gsap.set(links, { clearProps: 'opacity' })
     gsap.set(allHoverBoxes, { clearProps: 'width,height' })
     gsap.set(videoItems, { clearProps: 'opacity,zIndex,pointerEvents' })
     gsap.set(videoChildren, { clearProps: 'clipPath,willChange' })
