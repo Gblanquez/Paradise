@@ -18,3 +18,23 @@ body {
     -ms-overflow-style: none;
 
   }
+
+.lk-hover-box {
+  background:
+    linear-gradient(
+      90deg,
+      #c9f5ff 0%,
+      #7bb6ff 13%,
+      #121421 29%,
+      #020000 34%,
+      #170000 39%,
+      #d94520 57%,
+      #df5ca6 68%,
+      #d98cff 75%,
+      #111018 85%,
+      #f28db3 91%,
+      #2e8ef7 100%
+    );
+  background-size: 160% 100%;
+  background-position: center;
+}
