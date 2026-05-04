@@ -104,8 +104,8 @@ export function initInfoProjects(root = document) {
     overflowY: 'auto',
     overflowX: 'hidden',
     overscrollBehavior: 'contain',
-    WebkitOverflowScrolling: 'touch',
   })
+  container.style.setProperty('-webkit-overflow-scrolling', 'touch')
 
   return () => {
     activeTween?.kill()
@@ -115,6 +115,7 @@ export function initInfoProjects(root = document) {
     closeToggle.removeEventListener('click', onCloseClick)
     container.removeEventListener('wheel', handleWheel)
     container.removeEventListener('touchmove', stopScrollPropagation)
-    gsap.set(container, { clearProps: 'transform,height,maxHeight,overflowY,overflowX,overscrollBehavior,WebkitOverflowScrolling' })
+    container.style.removeProperty('-webkit-overflow-scrolling')
+    gsap.set(container, { clearProps: 'transform,height,maxHeight,overflowY,overflowX,overscrollBehavior' })
   }
 }

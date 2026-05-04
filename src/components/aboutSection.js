@@ -127,9 +127,9 @@ export function initAboutSection(root = document) {
     overflowY: 'auto',
     overflowX: 'hidden',
     overscrollBehavior: 'contain',
-    WebkitOverflowScrolling: 'touch',
     zIndex: 999,
   })
+  container.style.setProperty('-webkit-overflow-scrolling', 'touch')
 
   return () => {
     activeTween?.kill()
@@ -139,8 +139,9 @@ export function initAboutSection(root = document) {
     closeToggles.forEach((toggle) => toggle.removeEventListener('click', closeAbout))
     container.removeEventListener('wheel', handleWheel)
     container.removeEventListener('touchmove', stopScrollPropagation)
+    container.style.removeProperty('-webkit-overflow-scrolling')
     gsap.set(container, {
-      clearProps: 'transform,position,inset,height,maxHeight,overflowY,overflowX,overscrollBehavior,WebkitOverflowScrolling,zIndex',
+      clearProps: 'transform,position,inset,height,maxHeight,overflowY,overflowX,overscrollBehavior,zIndex',
     })
   }
 }
