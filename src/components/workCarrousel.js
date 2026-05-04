@@ -1,5 +1,5 @@
 import gsap from 'gsap'
-import { addScrollListener, lenis } from './scroll.js'
+import { lenis } from './scroll.js'
 
 const SELECTORS = {
   container: '.work-container',
@@ -51,10 +51,15 @@ export function initWorkCarrousel() {
   const formatCounter = (number) => String(number).padStart(counterPad, '0')
 
   let step = window.innerHeight
-  let start = 0
   let activeIndex = -1
   let snapTimeout = null
   let isSnapping = false
+  let scrollTween = null
+  let targetScroll = 0
+  let lastTouchY = null
+  const scrollState = { value: 0 }
+  const previousBodyOverflow = document.body.style.overflow
+  const previousHtmlOverflow = document.documentElement.style.overflow
   let spacer = document.querySelector(SELECTORS.spacer)
 
   if (!spacer) {
@@ -64,17 +69,20 @@ export function initWorkCarrousel() {
     container.insertAdjacentElement('afterend', spacer)
   }
 
+  gsap.set(spacer, {
+    height: 0,
+    visibility: 'hidden',
+    pointerEvents: 'none',
+  })
+
   const resize = () => {
     step = window.innerHeight || 1
-    start = container.offsetTop
-    spacer.style.height = `${step * items.length}px`
     lenis.resize()
-    render({ scroll: lenis.scroll })
+    render({ scroll: scrollState.value })
   }
 
   const render = ({ scroll }) => {
-    const localScroll = scroll - start
-    const active = localScroll / step
+    const active = scroll / step
     const nextActiveIndex = gsap.utils.wrap(0, items.length, Math.round(active))
 
     if (nextActiveIndex !== activeIndex) {
@@ -159,28 +167,33 @@ export function initWorkCarrousel() {
   }
 
   const snapToNearestItem = () => {
-    const localScroll = lenis.scroll - start
-    const snapIndex = Math.round(localScroll / step)
-    const target = start + snapIndex * step
+    const snapIndex = Math.round(scrollState.value / step)
+    const target = snapIndex * step
 
-    if (Math.abs(lenis.scroll - target) < 2) return
+    if (Math.abs(scrollState.value - target) < 2) return
 
     isSnapping = true
-    lenis.scrollTo(target, {
+    targetScroll = target
+    scrollTween?.kill()
+    scrollTween = gsap.to(scrollState, {
+      value: target,
       duration: 0.75,
-      easing: (t) => 1 - Math.pow(1 - t, 3),
+      ease: 'power3.out',
+      overwrite: true,
+      onUpdate: () => render({ scroll: scrollState.value }),
       onComplete: () => {
         isSnapping = false
+        scrollTween = null
       },
     })
   }
 
-  const scheduleSnap = ({ velocity }) => {
+  const scheduleSnap = (velocity) => {
     if (isSnapping) return
 
     window.clearTimeout(snapTimeout)
 
-    if (Math.abs(velocity) > 0.02) {
+    if (Math.abs(velocity) > 2) {
       snapTimeout = window.setTimeout(snapToNearestItem, 180)
       return
     }
@@ -188,15 +201,68 @@ export function initWorkCarrousel() {
     snapTimeout = window.setTimeout(snapToNearestItem, 80)
   }
 
+  const moveCarousel = (delta) => {
+    if (!delta) return
+
+    if (isSnapping) {
+      isSnapping = false
+    }
+
+    targetScroll += delta
+    scrollTween?.kill()
+    scrollTween = gsap.to(scrollState, {
+      value: targetScroll,
+      duration: 0.65,
+      ease: 'power3.out',
+      overwrite: true,
+      onUpdate: () => render({ scroll: scrollState.value }),
+      onComplete: () => {
+        scrollTween = null
+      },
+    })
+    scheduleSnap(delta)
+  }
+
+  const handleWheel = (event) => {
+    event.preventDefault()
+    moveCarousel(event.deltaY || event.deltaX)
+  }
+
+  const handleTouchStart = (event) => {
+    lastTouchY = event.touches?.[0]?.clientY ?? null
+  }
+
+  const handleTouchMove = (event) => {
+    if (lastTouchY === null) return
+
+    const nextTouchY = event.touches?.[0]?.clientY ?? lastTouchY
+    const delta = lastTouchY - nextTouchY
+
+    lastTouchY = nextTouchY
+    event.preventDefault()
+    moveCarousel(delta * 2)
+  }
+
+  const handleTouchEnd = () => {
+    lastTouchY = null
+  }
+
   if (gsap.getProperty(list, 'position') === 'static') {
     gsap.set(list, { position: 'relative' })
   }
 
   gsap.set(container, {
-    position: 'sticky',
+    position: 'fixed',
+    inset: 0,
+    width: '100%',
+    height: '100dvh',
     top: 0,
     overflow: 'hidden',
+    zIndex: 1,
   })
+
+  document.body.style.overflow = 'hidden'
+  document.documentElement.style.overflow = 'hidden'
 
   gsap.set(list, {
     height: '100%',
@@ -224,21 +290,27 @@ export function initWorkCarrousel() {
 
   resize()
 
-  const removeScrollListener = addScrollListener((scrollState) => {
-    render(scrollState)
-    scheduleSnap(scrollState)
-  })
   window.addEventListener('resize', resize)
+  window.addEventListener('wheel', handleWheel, { passive: false })
+  window.addEventListener('touchstart', handleTouchStart, { passive: true })
+  window.addEventListener('touchmove', handleTouchMove, { passive: false })
+  window.addEventListener('touchend', handleTouchEnd)
 
   return ({ preserveStyles = false } = {}) => {
-    removeScrollListener()
     window.removeEventListener('resize', resize)
+    window.removeEventListener('wheel', handleWheel)
+    window.removeEventListener('touchstart', handleTouchStart)
+    window.removeEventListener('touchmove', handleTouchMove)
+    window.removeEventListener('touchend', handleTouchEnd)
     window.clearTimeout(snapTimeout)
+    scrollTween?.kill()
+    document.body.style.overflow = previousBodyOverflow
+    document.documentElement.style.overflow = previousHtmlOverflow
 
     if (preserveStyles) return
 
     spacer.remove()
-    gsap.set(container, { clearProps: 'position,top,overflow' })
+    gsap.set(container, { clearProps: 'position,inset,width,height,top,overflow,zIndex' })
     gsap.set(list, { clearProps: 'height' })
     gsap.set(items, { clearProps: 'opacity,visibility,willChange,zIndex,pointerEvents,left,top,width,height' })
     gsap.set(links, { clearProps: 'display,width,height,overflow,willChange,transform,clipPath' })

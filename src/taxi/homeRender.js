@@ -1,10 +1,13 @@
 import { Renderer } from '@unseenco/taxi'
+import { initAboutSection } from '../components/aboutSection.js'
 import { initWorkCarrousel } from '../components/workCarrousel.js'
 
 export default class homeRender extends Renderer {
+  destroyAboutSection = () => {}
   destroyWorkCarrousel = () => {}
 
   onEnter() {
+    this.destroyAboutSection = initAboutSection(this.content)
     this.destroyWorkCarrousel = initWorkCarrousel()
   }
 
@@ -22,11 +25,14 @@ export default class homeRender extends Renderer {
 
   leave(transition, trigger, removeOldContent) {
     return new Promise((resolve) => {
-      const transitionName = trigger instanceof HTMLElement
-        ? trigger.dataset.transition
-        : false
+      const transitionTrigger = trigger instanceof HTMLElement
+        ? trigger.closest('[data-transition]')
+        : null
+      const transitionName = transitionTrigger?.dataset.transition || false
       const isWorkTransition = transitionName === 'workTransition' || transitionName === 'work'
 
+      this.destroyAboutSection()
+      this.destroyAboutSection = () => {}
       this.destroyWorkCarrousel({ preserveStyles: isWorkTransition })
       this.destroyWorkCarrousel = () => {}
 

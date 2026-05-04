@@ -1,10 +1,13 @@
 import { Renderer } from '@unseenco/taxi'
+import { initAboutSection } from '../components/aboutSection.js'
 import { initProjectList } from '../components/project.js'
 
 export default class projectRender extends Renderer {
+  destroyAboutSection = () => {}
   destroyProjectList = () => {}
 
   onEnter() {
+    this.destroyAboutSection = initAboutSection(this.content)
     this.destroyProjectList = initProjectList(this.content)
   }
 
@@ -22,13 +25,16 @@ export default class projectRender extends Renderer {
 
   leave(transition, trigger, removeOldContent) {
     return new Promise((resolve) => {
-      const transitionName = trigger instanceof HTMLElement
-        ? trigger.dataset.transition
-        : false
+      const transitionTrigger = trigger instanceof HTMLElement
+        ? trigger.closest('[data-transition]')
+        : null
+      const transitionName = transitionTrigger?.dataset.transition || false
       const isWorkTransition = transitionName === 'workTransition' || transitionName === 'work'
 
       this.destroyProjectList()
       this.destroyProjectList = () => {}
+      this.destroyAboutSection()
+      this.destroyAboutSection = () => {}
 
       transition.leave({ trigger, from: this.content })
         .then(() => {

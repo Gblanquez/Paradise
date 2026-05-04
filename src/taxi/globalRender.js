@@ -1,8 +1,11 @@
 import { Renderer } from '@unseenco/taxi'
+import { initAboutSection } from '../components/aboutSection.js'
 
 export default class globalRender extends Renderer {
+  destroyAboutSection = () => {}
+
   onEnter() {
-    // run after the new content has been added to the Taxi container
+    this.destroyAboutSection = initAboutSection(this.content)
   }
 
   onEnterCompleted() {
@@ -10,7 +13,8 @@ export default class globalRender extends Renderer {
   }
 
   onLeave() {
-    // run before the transition.onLeave method is called
+    this.destroyAboutSection()
+    this.destroyAboutSection = () => {}
   }
 
   onLeaveCompleted() {

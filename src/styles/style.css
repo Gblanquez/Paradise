@@ -19,7 +19,8 @@ body {
 
   }
 
-.lk-hover-box {
+.lk-hover-box,
+.video-timeline {
   background:
     linear-gradient(
       90deg,
