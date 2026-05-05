@@ -78,7 +78,6 @@ export function initWorkCarrousel() {
   let scrollTween = null
   let targetScroll = 0
   let isMobile = window.innerWidth <= 480
-  let scrollDirection = 1
   const scrollState = { value: 0 }
   const previousBodyOverflow = document.body.style.overflow
   const previousHtmlOverflow = document.documentElement.style.overflow
@@ -100,7 +99,7 @@ export function initWorkCarrousel() {
 
   const resize = () => {
     isMobile = window.innerWidth <= 480
-    step = (window.innerHeight || 1) * (isMobile ? 0.45 : 1)
+    step = (window.innerHeight || 1) * (isMobile ? 0.25 : 1)
     lenis.resize()
     render({ scroll: scrollState.value })
   }
@@ -111,10 +110,7 @@ export function initWorkCarrousel() {
       return
     }
 
-    setter(scrollDirection >= 0
-      ? `inset(0 0 ${reveal}% 0)`
-      : `inset(${reveal}% 0 0 0)`
-    )
+    setter(`inset(${reveal}% 0 0 0)`)
   }
 
   const render = ({ scroll }) => {
@@ -248,7 +244,6 @@ export function initWorkCarrousel() {
       isSnapping = false
     }
 
-    scrollDirection = delta > 0 ? 1 : -1
     targetScroll += delta
     scrollTween?.kill()
     scrollTween = gsap.to(scrollState, {
