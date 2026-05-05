@@ -20,6 +20,8 @@ body {
   }
 
 .lk-hover-box,
+.load-vertical-line,
+.reel-load-line,
 .video-timeline {
   background:
     linear-gradient(
@@ -38,4 +40,10 @@ body {
     );
   background-size: 160% 100%;
   background-position: center;
+}
+
+
+.team-container
+{
+    pointer-events: none;
 }

@@ -1,5 +1,6 @@
 import gsap from 'gsap'
 import { lenis } from './scroll.js'
+import { initVerticalVideos } from './verticalVideos.js'
 
 const SELECTORS = {
   container: '.info-container',
@@ -19,6 +20,7 @@ export function initInfoProjects(root = document) {
   let activeTween = null
   let isOpen = !container.classList.contains('hide')
   let wasVideoPaused = video?.paused ?? true
+  let verticalVideos = null
 
   const pauseVideo = () => {
     if (!video) return
@@ -40,6 +42,10 @@ export function initInfoProjects(root = document) {
     lenis.stop()
     pauseVideo()
 
+    if (!verticalVideos) {
+      verticalVideos = initVerticalVideos(container)
+    }
+
     activeTween = gsap.fromTo(container,
       { x: '100%' },
       {
@@ -54,6 +60,7 @@ export function initInfoProjects(root = document) {
   const closeInfo = () => {
     activeTween?.kill()
     isOpen = false
+    verticalVideos?.pause()
 
     activeTween = gsap.to(container, {
       x: '100%',
@@ -111,6 +118,8 @@ export function initInfoProjects(root = document) {
     activeTween?.kill()
     lenis.start()
     resumeVideo()
+    verticalVideos?.destroy()
+    verticalVideos = null
     openToggle.removeEventListener('click', onOpenClick)
     closeToggle.removeEventListener('click', onCloseClick)
     container.removeEventListener('wheel', handleWheel)

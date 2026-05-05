@@ -1,5 +1,7 @@
 import gsap from 'gsap'
 import { lenis } from './scroll.js'
+import { initReel } from './reel.js'
+import { initTeamCarrousel } from './teamCarrousel.js'
 
 const SELECTORS = {
   container: '.about-container',
@@ -23,6 +25,8 @@ export function initAboutSection(root = document) {
   let previousBodyOverflow = ''
   let previousHtmlOverflow = ''
   let isPageScrollLocked = false
+  let reel = null
+  let destroyTeamCarrousel = null
 
   const lockPageScroll = () => {
     if (isPageScrollLocked) return
@@ -71,6 +75,14 @@ export function initAboutSection(root = document) {
     lockPageScroll()
     pauseVideos()
 
+    if (!reel) {
+      reel = initReel(container)
+    }
+
+    if (!destroyTeamCarrousel) {
+      destroyTeamCarrousel = initTeamCarrousel(container)
+    }
+
     activeTween = gsap.fromTo(container,
       { x: '100%' },
       {
@@ -87,6 +99,9 @@ export function initAboutSection(root = document) {
 
     activeTween?.kill()
     isOpen = false
+    reel?.pause()
+    destroyTeamCarrousel?.()
+    destroyTeamCarrousel = null
 
     activeTween = gsap.to(container, {
       x: '100%',
@@ -96,6 +111,7 @@ export function initAboutSection(root = document) {
       onComplete: () => {
         container.classList.add('hide')
         resumeVideos()
+        reel?.pause()
         unlockPageScroll()
       },
     })
@@ -135,6 +151,10 @@ export function initAboutSection(root = document) {
     activeTween?.kill()
     unlockPageScroll()
     resumeVideos()
+    reel?.destroy()
+    reel = null
+    destroyTeamCarrousel?.()
+    destroyTeamCarrousel = null
     openToggles.forEach((toggle) => toggle.removeEventListener('click', openAbout))
     closeToggles.forEach((toggle) => toggle.removeEventListener('click', closeAbout))
     container.removeEventListener('wheel', handleWheel)

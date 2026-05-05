@@ -1,0 +1,201 @@
+import gsap from 'gsap'
+
+const SELECTORS = {
+  container: '.reel-container',
+  video: '.reel',
+  line: '.reel-load-line',
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function getLoadProgress(video) {
+  if (!video.duration || !Number.isFinite(video.duration) || video.buffered.length === 0) {
+    return video.readyState >= 2 ? 0.65 : 0
+  }
+
+  return video.buffered.end(video.buffered.length - 1) / video.duration
+}
+
+function waitForVideo(video, updateProgress) {
+  return new Promise((resolve) => {
+    let timeout = null
+
+    const complete = () => {
+      cleanup()
+      updateProgress(1)
+      resolve()
+    }
+
+    const update = () => {
+      updateProgress(Math.max(0.12, getLoadProgress(video) * 0.95))
+    }
+
+    const cleanup = () => {
+      video.removeEventListener('loadedmetadata', update)
+      video.removeEventListener('loadeddata', update)
+      video.removeEventListener('progress', update)
+      video.removeEventListener('canplay', complete)
+      video.removeEventListener('canplaythrough', complete)
+      video.removeEventListener('error', complete)
+
+      if (timeout) {
+        window.clearTimeout(timeout)
+      }
+    }
+
+    if (video.readyState >= 3) {
+      complete()
+      return
+    }
+
+    timeout = window.setTimeout(complete, 8000)
+
+    video.addEventListener('loadedmetadata', update)
+    video.addEventListener('loadeddata', update)
+    video.addEventListener('progress', update)
+    video.addEventListener('canplay', complete, { once: true })
+    video.addEventListener('canplaythrough', complete, { once: true })
+    video.addEventListener('error', complete, { once: true })
+
+    video.load()
+    update()
+  })
+}
+
+export function initReel(root = document) {
+  const container = root.querySelector(SELECTORS.container)
+  const video = container?.querySelector(SELECTORS.video)
+  const line = container?.querySelector(SELECTORS.line)
+
+  if (!container || !video || !line) {
+    return {
+      pause: () => {},
+      destroy: () => {},
+    }
+  }
+
+  let loadTween = null
+  let lineTween = null
+  let requestId = 0
+  let isLoading = false
+
+  const resetLine = () => {
+    loadTween?.kill()
+    lineTween?.kill()
+    loadTween = null
+    lineTween = null
+
+    gsap.set(line, {
+      width: '0%',
+      scaleX: 1,
+      transformOrigin: 'right center',
+    })
+  }
+
+  const pause = () => {
+    video.pause()
+  }
+
+  const playWithSound = () => {
+    video.muted = false
+    video.volume = 1
+    video.playsInline = true
+    video.setAttribute('playsinline', '')
+    video.removeAttribute('muted')
+    video.play().catch(() => {})
+  }
+
+  const loadAndPlay = async () => {
+    requestId += 1
+    const activeRequest = requestId
+
+    isLoading = true
+    video.pause()
+    video.currentTime = 0
+    video.preload = 'auto'
+    video.playsInline = true
+    video.setAttribute('playsinline', '')
+    video.muted = false
+    video.volume = 1
+    video.removeAttribute('muted')
+    resetLine()
+
+    const setProgress = (progress) => {
+      if (activeRequest !== requestId) return
+
+      loadTween?.kill()
+      loadTween = gsap.to(line, {
+        width: `${clamp(progress, 0, 1) * 100}%`,
+        scaleX: 1,
+        duration: 0.25,
+        ease: 'power2.out',
+        overwrite: true,
+      })
+    }
+
+    await waitForVideo(video, setProgress)
+
+    if (activeRequest !== requestId) return
+
+    isLoading = false
+    loadTween?.kill()
+    loadTween = gsap.to(line, {
+      width: '100%',
+      scaleX: 1,
+      duration: 0.28,
+      ease: 'power2.out',
+      overwrite: true,
+      onComplete: () => {
+        if (activeRequest !== requestId) return
+
+        lineTween = gsap.to(line, {
+          scaleX: 0,
+          duration: 0.45,
+          ease: 'power3.inOut',
+          overwrite: true,
+          onComplete: playWithSound,
+        })
+      },
+    })
+  }
+
+  const handleClick = () => {
+    if (isLoading) {
+      requestId += 1
+      isLoading = false
+      pause()
+      resetLine()
+      return
+    }
+
+    if (!video.paused) {
+      pause()
+      return
+    }
+
+    loadAndPlay()
+  }
+
+  video.pause()
+  video.preload = 'auto'
+  video.playsInline = true
+  video.setAttribute('playsinline', '')
+  resetLine()
+
+  container.addEventListener('click', handleClick)
+
+  return {
+    pause,
+    destroy: () => {
+      requestId += 1
+      isLoading = false
+      pause()
+      container.removeEventListener('click', handleClick)
+      loadTween?.kill()
+      lineTween?.kill()
+      gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
+    },
+  }
+}
