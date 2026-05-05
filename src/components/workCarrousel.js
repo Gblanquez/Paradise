@@ -56,6 +56,7 @@ export function initWorkCarrousel() {
   let isSnapping = false
   let scrollTween = null
   let targetScroll = 0
+  let lastTouchX = null
   let lastTouchY = null
   const scrollState = { value: 0 }
   const previousBodyOverflow = document.body.style.overflow
@@ -229,21 +230,34 @@ export function initWorkCarrousel() {
   }
 
   const handleTouchStart = (event) => {
-    lastTouchY = event.touches?.[0]?.clientY ?? null
+    const touch = event.touches?.[0]
+
+    lastTouchX = touch?.clientX ?? null
+    lastTouchY = touch?.clientY ?? null
   }
 
   const handleTouchMove = (event) => {
-    if (lastTouchY === null) return
+    if (lastTouchX === null || lastTouchY === null) return
 
-    const nextTouchY = event.touches?.[0]?.clientY ?? lastTouchY
-    const delta = lastTouchY - nextTouchY
+    const touch = event.touches?.[0]
+    const nextTouchX = touch?.clientX ?? lastTouchX
+    const nextTouchY = touch?.clientY ?? lastTouchY
+    const deltaX = lastTouchX - nextTouchX
+    const deltaY = lastTouchY - nextTouchY
+    const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY
 
+    lastTouchX = nextTouchX
     lastTouchY = nextTouchY
-    event.preventDefault()
+
+    if (event.cancelable) {
+      event.preventDefault()
+    }
+
     moveCarousel(delta * 2)
   }
 
   const handleTouchEnd = () => {
+    lastTouchX = null
     lastTouchY = null
   }
 
@@ -258,6 +272,8 @@ export function initWorkCarrousel() {
     height: '100dvh',
     top: 0,
     overflow: 'hidden',
+    touchAction: 'none',
+    overscrollBehavior: 'none',
     zIndex: 1,
   })
 
@@ -288,20 +304,27 @@ export function initWorkCarrousel() {
     willChange: 'clip-path',
   })
 
+  gsap.set(contentItems, {
+    opacity: 0,
+  })
+
   resize()
+  window.requestAnimationFrame(resize)
 
   window.addEventListener('resize', resize)
   window.addEventListener('wheel', handleWheel, { passive: false })
-  window.addEventListener('touchstart', handleTouchStart, { passive: true })
-  window.addEventListener('touchmove', handleTouchMove, { passive: false })
-  window.addEventListener('touchend', handleTouchEnd)
+  container.addEventListener('touchstart', handleTouchStart, { passive: true })
+  container.addEventListener('touchmove', handleTouchMove, { passive: false })
+  container.addEventListener('touchend', handleTouchEnd)
+  container.addEventListener('touchcancel', handleTouchEnd)
 
   return ({ preserveStyles = false } = {}) => {
     window.removeEventListener('resize', resize)
     window.removeEventListener('wheel', handleWheel)
-    window.removeEventListener('touchstart', handleTouchStart)
-    window.removeEventListener('touchmove', handleTouchMove)
-    window.removeEventListener('touchend', handleTouchEnd)
+    container.removeEventListener('touchstart', handleTouchStart)
+    container.removeEventListener('touchmove', handleTouchMove)
+    container.removeEventListener('touchend', handleTouchEnd)
+    container.removeEventListener('touchcancel', handleTouchEnd)
     window.clearTimeout(snapTimeout)
     scrollTween?.kill()
     document.body.style.overflow = previousBodyOverflow
@@ -310,7 +333,7 @@ export function initWorkCarrousel() {
     if (preserveStyles) return
 
     spacer.remove()
-    gsap.set(container, { clearProps: 'position,inset,width,height,top,overflow,zIndex' })
+    gsap.set(container, { clearProps: 'position,inset,width,height,top,overflow,touchAction,overscrollBehavior,zIndex' })
     gsap.set(list, { clearProps: 'height' })
     gsap.set(items, { clearProps: 'opacity,visibility,willChange,zIndex,pointerEvents,left,top,width,height' })
     gsap.set(links, { clearProps: 'display,width,height,overflow,willChange,transform,clipPath' })
