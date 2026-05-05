@@ -56,8 +56,11 @@ export function initWorkCarrousel() {
   let isSnapping = false
   let scrollTween = null
   let targetScroll = 0
-  let lastTouchX = null
-  let lastTouchY = null
+  let dragStartX = 0
+  let dragStartY = 0
+  let isDragging = false
+  let didDrag = false
+  let dragPointerId = null
   const scrollState = { value: 0 }
   const previousBodyOverflow = document.body.style.overflow
   const previousHtmlOverflow = document.documentElement.style.overflow
@@ -229,36 +232,46 @@ export function initWorkCarrousel() {
     moveCarousel(event.deltaY || event.deltaX)
   }
 
-  const handleTouchStart = (event) => {
-    const touch = event.touches?.[0]
+  const handlePointerDown = (event) => {
+    if (event.button !== undefined && event.button !== 0) return
 
-    lastTouchX = touch?.clientX ?? null
-    lastTouchY = touch?.clientY ?? null
+    isDragging = true
+    didDrag = false
+    dragPointerId = event.pointerId
+    dragStartX = event.clientX
+    dragStartY = event.clientY
+    container.setPointerCapture?.(dragPointerId)
   }
 
-  const handleTouchMove = (event) => {
-    if (lastTouchX === null || lastTouchY === null) return
+  const handlePointerMove = (event) => {
+    if (!isDragging || event.pointerId !== dragPointerId) return
 
-    const touch = event.touches?.[0]
-    const nextTouchX = touch?.clientX ?? lastTouchX
-    const nextTouchY = touch?.clientY ?? lastTouchY
-    const deltaX = lastTouchX - nextTouchX
-    const deltaY = lastTouchY - nextTouchY
+    const deltaX = dragStartX - event.clientX
+    const deltaY = dragStartY - event.clientY
+
+    if (!didDrag && Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return
+
     const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY
 
-    lastTouchX = nextTouchX
-    lastTouchY = nextTouchY
-
-    if (event.cancelable) {
-      event.preventDefault()
-    }
-
+    event.preventDefault()
+    didDrag = true
+    dragStartX = event.clientX
+    dragStartY = event.clientY
     moveCarousel(delta * 2)
   }
 
-  const handleTouchEnd = () => {
-    lastTouchX = null
-    lastTouchY = null
+  const handlePointerUp = (event) => {
+    if (!isDragging || event.pointerId !== dragPointerId) return
+
+    isDragging = false
+    dragPointerId = null
+    container.releasePointerCapture?.(event.pointerId)
+
+    if (didDrag) {
+      window.setTimeout(() => {
+        didDrag = false
+      }, 0)
+    }
   }
 
   if (gsap.getProperty(list, 'position') === 'static') {
@@ -304,27 +317,22 @@ export function initWorkCarrousel() {
     willChange: 'clip-path',
   })
 
-  gsap.set(contentItems, {
-    opacity: 0,
-  })
-
   resize()
-  window.requestAnimationFrame(resize)
 
   window.addEventListener('resize', resize)
   window.addEventListener('wheel', handleWheel, { passive: false })
-  container.addEventListener('touchstart', handleTouchStart, { passive: true })
-  container.addEventListener('touchmove', handleTouchMove, { passive: false })
-  container.addEventListener('touchend', handleTouchEnd)
-  container.addEventListener('touchcancel', handleTouchEnd)
+  container.addEventListener('pointerdown', handlePointerDown)
+  container.addEventListener('pointermove', handlePointerMove)
+  container.addEventListener('pointerup', handlePointerUp)
+  container.addEventListener('pointercancel', handlePointerUp)
 
   return ({ preserveStyles = false } = {}) => {
     window.removeEventListener('resize', resize)
     window.removeEventListener('wheel', handleWheel)
-    container.removeEventListener('touchstart', handleTouchStart)
-    container.removeEventListener('touchmove', handleTouchMove)
-    container.removeEventListener('touchend', handleTouchEnd)
-    container.removeEventListener('touchcancel', handleTouchEnd)
+    container.removeEventListener('pointerdown', handlePointerDown)
+    container.removeEventListener('pointermove', handlePointerMove)
+    container.removeEventListener('pointerup', handlePointerUp)
+    container.removeEventListener('pointercancel', handlePointerUp)
     window.clearTimeout(snapTimeout)
     scrollTween?.kill()
     document.body.style.overflow = previousBodyOverflow
