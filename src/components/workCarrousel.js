@@ -61,7 +61,7 @@ export function initWorkCarrousel() {
     ...currentEls.map((el) => el.textContent.trim().length),
     ...lengthEls.map((el) => el.textContent.trim().length)
   )
-  const setItemAutoAlpha = items.map((item) => gsap.quickSetter(item, 'autoAlpha'))
+  const setItemOpacity = items.map((item) => gsap.quickSetter(item, 'opacity'))
   const setLinkX = links.map((link) => gsap.quickSetter(link, 'xPercent'))
   const setLinkClipPath = links.map((link) => gsap.quickSetter(link, 'clipPath'))
   const setContentOpacity = contentItems.map((item) => gsap.quickSetter(item, 'opacity'))
@@ -121,7 +121,8 @@ export function initWorkCarrousel() {
       const isOutgoing = distance < 0 && distance > -1
       const isVisible = isIncoming || isOutgoing
 
-      setItemAutoAlpha[index](isVisible ? 1 : 0)
+      setItemOpacity[index](isVisible ? 1 : 0)
+      item.style.visibility = isVisible ? 'visible' : 'hidden'
 
       if (isIncoming) {
         const reveal = distance * 100
