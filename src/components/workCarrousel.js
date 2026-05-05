@@ -37,8 +37,23 @@ function clearInlineProps(targets, props) {
   })
 }
 
+function isMobileViewport() {
+  return window.innerWidth <= 480
+}
+
+function matchesCurrentViewport(element) {
+  if (!element) return false
+
+  const isMobile = isMobileViewport()
+
+  if (isMobile && element.closest('.mob-hide')) return false
+  if (!isMobile && element.closest('.desktop-hide')) return false
+
+  return true
+}
+
 function isVisible(element) {
-  return element && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+  return matchesCurrentViewport(element) && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
 }
 
 export function initWorkCarrousel() {
@@ -74,6 +89,12 @@ export function initWorkCarrousel() {
   const setThumbnailOpacity = thumbnailItems.map((item) => gsap.quickSetter(item, 'opacity'))
   const setThumbnailClipPath = thumbnailContainers.map((item) => gsap.quickSetter(item, 'clipPath'))
 
+  links.forEach((link) => {
+    if (link instanceof HTMLAnchorElement && !link.dataset.transition) {
+      link.dataset.transition = 'workTransition'
+    }
+  })
+
   const formatCounter = (number) => String(number).padStart(counterPad, '0')
 
   let step = window.innerHeight
@@ -82,7 +103,7 @@ export function initWorkCarrousel() {
   let isSnapping = false
   let scrollTween = null
   let targetScroll = 0
-  let isMobile = window.innerWidth <= 480
+  let isMobile = isMobileViewport()
   let mobileMaskDirection = -1
   const scrollState = { value: 0 }
   const previousBodyOverflow = document.body.style.overflow
@@ -104,7 +125,7 @@ export function initWorkCarrousel() {
   })
 
   const resize = () => {
-    isMobile = window.innerWidth <= 480
+    isMobile = isMobileViewport()
     step = (window.innerHeight || 1) * (isMobile ? 0.25 : 1)
     lenis.resize()
     render({ scroll: scrollState.value })

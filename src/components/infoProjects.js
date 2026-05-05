@@ -10,7 +10,22 @@ const SELECTORS = {
 }
 
 function isVisible(element) {
-  return element && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+  return element && matchesCurrentViewport(element) && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+}
+
+function isMobileViewport() {
+  return window.innerWidth <= 480
+}
+
+function matchesCurrentViewport(element) {
+  if (!element) return false
+
+  const isMobile = isMobileViewport()
+
+  if (isMobile && element.closest('.mob-hide')) return false
+  if (!isMobile && element.closest('.desktop-hide')) return false
+
+  return true
 }
 
 export function initInfoProjects(root = document) {
@@ -18,7 +33,7 @@ export function initInfoProjects(root = document) {
   const openToggle = root.querySelector(SELECTORS.openToggle)
   const closeToggle = root.querySelector(SELECTORS.closeToggle)
   const videos = gsap.utils.toArray(SELECTORS.video, root)
-  const video = videos.find(isVisible) || videos[0]
+  const video = videos.find(isVisible) || videos.find(matchesCurrentViewport) || videos[0]
 
   if (!container || !openToggle || !closeToggle) return () => {}
 

@@ -60,13 +60,28 @@ function getBufferedProgress(video) {
 }
 
 function isVisible(element) {
-  return element && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+  return element && matchesCurrentViewport(element) && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+}
+
+function isMobileViewport() {
+  return window.innerWidth <= 480
+}
+
+function matchesCurrentViewport(element) {
+  if (!element) return false
+
+  const isMobile = isMobileViewport()
+
+  if (isMobile && element.closest('.mob-hide')) return false
+  if (!isMobile && element.closest('.desktop-hide')) return false
+
+  return true
 }
 
 function getVisibleElement(selector, root) {
   const elements = gsap.utils.toArray(selector, root)
 
-  return elements.find(isVisible) || elements[0] || null
+  return elements.find(isVisible) || elements.find(matchesCurrentViewport) || elements[0] || null
 }
 
 function waitForVideo(video) {
