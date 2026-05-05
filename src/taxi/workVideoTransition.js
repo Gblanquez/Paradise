@@ -6,7 +6,9 @@ const SELECTORS = {
   line: '.line-video-load',
   lineParent: '[data-a="line-parent"]',
   videoParent: '.work-video-parent',
+  videoScaleParent: '.video-parent',
   video: '.main-workp-video',
+  revealUi: '.work-title-parent, .work-settings, .work-toggles-parent',
 }
 
 let transitionLine = null
@@ -22,6 +24,24 @@ function setLineProgress(progress) {
     duration: 0.35,
     ease: 'power2.out',
     overwrite: true,
+  })
+}
+
+function finishLineProgress() {
+  transitionLineTween?.kill()
+  transitionLineTween = null
+
+  if (!transitionLine) return Promise.resolve()
+
+  return new Promise((resolve) => {
+    gsap.to(transitionLine, {
+      width: '100%',
+      scaleX: 1,
+      duration: 0.45,
+      ease: 'power2.out',
+      overwrite: true,
+      onComplete: resolve,
+    })
   })
 }
 
@@ -90,7 +110,6 @@ function waitForVideo(video) {
 
     const complete = () => {
       cleanup()
-      setLineProgress(1)
       resolve()
     }
 
@@ -130,7 +149,7 @@ function waitForVideo(video) {
   })
 }
 
-function startVideo(video) {
+async function startVideo(video) {
   video.loop = true
   video.autoplay = true
   video.muted = false
@@ -144,10 +163,10 @@ function startVideo(video) {
 
   if (!playPromise) return
 
-  playPromise.catch(() => {
+  return playPromise.catch(async () => {
     video.muted = true
     video.setAttribute('muted', '')
-    video.play().catch(() => {})
+    await video.play().catch(() => {})
 
     const unlockSound = () => {
       video.muted = false
@@ -158,6 +177,19 @@ function startVideo(video) {
 
     window.addEventListener('pointerdown', unlockSound, { once: true })
   })
+}
+
+function prepareVideo(video) {
+  video.loop = true
+  video.autoplay = true
+  video.muted = false
+  video.volume = 1
+  video.playsInline = true
+  video.preload = 'auto'
+  video.setAttribute('autoplay', '')
+  video.setAttribute('playsinline', '')
+  video.removeAttribute('muted')
+  video.load()
 }
 
 function getActiveContentItem(from) {
@@ -199,7 +231,9 @@ export function startWorkVideoLeave(from) {
 
 export async function enterWorkVideo({ to, wrapper, done }) {
   const videoParent = getVisibleElement(SELECTORS.videoParent, to)
+  const videoScaleParent = videoParent?.querySelector(SELECTORS.videoScaleParent) || getVisibleElement(SELECTORS.videoScaleParent, to)
   const video = videoParent?.querySelector(SELECTORS.video) || getVisibleElement(SELECTORS.video, to)
+  const revealUi = gsap.utils.toArray(SELECTORS.revealUi, to).filter(matchesCurrentViewport)
 
   if (!videoParent || !video) {
     destroyTransitionLine()
@@ -219,19 +253,32 @@ export async function enterWorkVideo({ to, wrapper, done }) {
 
   const overlay = createTransitionOverlay(to)
 
+  gsap.set(revealUi, {
+    opacity: 0,
+  })
+
   gsap.set(videoParent, {
     position: 'absolute',
     inset: 0,
     zIndex: 12,
     pointerEvents: 'none',
     clipPath: 'inset(100% 0 0 0)',
+    scale: 0.8,
     overflow: 'hidden',
-    willChange: 'clip-path',
+    willChange: 'clip-path, transform',
   })
 
-  startVideo(video)
+  if (videoScaleParent) {
+    gsap.set(videoScaleParent, {
+      scale: 1.5,
+      willChange: 'transform',
+    })
+  }
+
+  prepareVideo(video)
   await waitForVideo(video)
-  startVideo(video)
+  await finishLineProgress()
+  await startVideo(video)
 
   const tl = gsap.timeline({
     defaults: { ease: 'power3.inOut' },
@@ -245,20 +292,12 @@ export async function enterWorkVideo({ to, wrapper, done }) {
     },
   })
 
-  if (transitionLine) {
-    tl.to(transitionLine, {
-      width: '100%',
-      duration: 0.25,
-      ease: 'power2.out',
-    }, 0)
-  }
-
   if (transitionLineParent) {
     tl.to(transitionLineParent, {
       scaleX: 0,
       duration: 0.65,
       ease: 'power3.inOut',
-    }, 0.25)
+    }, 0)
   }
 
   tl.to(overlay, {
@@ -269,6 +308,23 @@ export async function enterWorkVideo({ to, wrapper, done }) {
 
   tl.to(videoParent, {
     clipPath: 'inset(0% 0 0 0)',
+    scale: 1,
     duration: 1.05,
   }, 0.2)
+
+  if (videoScaleParent) {
+    tl.to(videoScaleParent, {
+      scale: 1,
+      duration: 1.05,
+    }, 0.2)
+  }
+
+  if (revealUi.length) {
+    tl.to(revealUi, {
+      opacity: 1,
+      duration: 0.55,
+      ease: 'power2.out',
+      stagger: 0.04,
+    }, 0.9)
+  }
 }

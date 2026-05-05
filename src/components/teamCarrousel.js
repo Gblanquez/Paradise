@@ -24,6 +24,9 @@ export function initTeamCarrousel(root = document) {
   let dragStartX = 0
   let dragStartY = 0
   let dragStartPosition = 0
+  let lastDragX = 0
+  let lastDragTime = 0
+  let dragVelocity = 0
   let currentX = 0
   let maxX = 0
   let isDragging = false
@@ -39,18 +42,13 @@ export function initTeamCarrousel(root = document) {
     setListX(currentX)
   }
 
-  const snapToNearestItem = () => {
-    const nearest = items.reduce((closest, item) => {
-      const distance = Math.abs(item.offsetLeft + currentX)
-      return distance < closest.distance ? { item, distance } : closest
-    }, { item: items[0], distance: Infinity }).item
-
-    const target = clamp(-nearest.offsetLeft, -maxX, 0)
+  const releaseMomentum = () => {
+    const target = clamp(currentX + dragVelocity * 260, -maxX, 0)
 
     listTween?.kill()
     listTween = gsap.to(list, {
       x: target,
-      duration: 0.55,
+      duration: 0.75,
       ease: 'power3.out',
       overwrite: true,
       onUpdate: () => {
@@ -73,6 +71,9 @@ export function initTeamCarrousel(root = document) {
     dragStartX = event.clientX
     dragStartY = event.clientY
     dragStartPosition = currentX
+    lastDragX = event.clientX
+    lastDragTime = performance.now()
+    dragVelocity = 0
     parent.setPointerCapture?.(dragPointerId)
   }
 
@@ -87,6 +88,14 @@ export function initTeamCarrousel(root = document) {
 
     event.preventDefault()
     didDrag = true
+    {
+      const now = performance.now()
+      const elapsed = Math.max(16, now - lastDragTime)
+
+      dragVelocity = (event.clientX - lastDragX) / elapsed
+      lastDragX = event.clientX
+      lastDragTime = now
+    }
     currentX = clamp(dragStartPosition + deltaX, -maxX, 0)
     setListX(currentX)
   }
@@ -99,7 +108,7 @@ export function initTeamCarrousel(root = document) {
     parent.releasePointerCapture?.(event.pointerId)
 
     if (didDrag) {
-      snapToNearestItem()
+      releaseMomentum()
       window.setTimeout(() => {
         didDrag = false
       }, 0)

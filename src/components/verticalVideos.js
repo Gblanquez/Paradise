@@ -101,6 +101,9 @@ export function initVerticalVideos(root = document) {
   let dragStartX = 0
   let dragStartY = 0
   let dragStartPosition = 0
+  let lastDragX = 0
+  let lastDragTime = 0
+  let dragVelocity = 0
   let currentX = 0
   let maxX = 0
   let isDragging = false
@@ -118,18 +121,13 @@ export function initVerticalVideos(root = document) {
     setWrapperX(currentX)
   }
 
-  const snapToNearestStory = () => {
-    const nearest = stories.reduce((closest, story) => {
-      const distance = Math.abs(story.offsetLeft + currentX)
-      return distance < closest.distance ? { story, distance } : closest
-    }, { story: stories[0], distance: Infinity }).story
-
-    const target = clamp(-nearest.offsetLeft, -maxX, 0)
+  const releaseMomentum = () => {
+    const target = clamp(currentX + dragVelocity * 260, -maxX, 0)
 
     wrapperTween?.kill()
     wrapperTween = gsap.to(wrapper, {
       x: target,
-      duration: 0.55,
+      duration: 0.75,
       ease: 'power3.out',
       overwrite: true,
       onUpdate: () => {
@@ -267,6 +265,9 @@ export function initVerticalVideos(root = document) {
     dragStartX = event.clientX
     dragStartY = event.clientY
     dragStartPosition = currentX
+    lastDragX = event.clientX
+    lastDragTime = performance.now()
+    dragVelocity = 0
     container.setPointerCapture?.(dragPointerId)
   }
 
@@ -282,6 +283,14 @@ export function initVerticalVideos(root = document) {
 
     event.preventDefault()
     didDrag = true
+    {
+      const now = performance.now()
+      const elapsed = Math.max(16, now - lastDragTime)
+
+      dragVelocity = (event.clientX - lastDragX) / elapsed
+      lastDragX = event.clientX
+      lastDragTime = now
+    }
     currentX = clamp(dragStartPosition + deltaX, -maxX, 0)
     setWrapperX(currentX)
   }
@@ -294,7 +303,7 @@ export function initVerticalVideos(root = document) {
     container.releasePointerCapture?.(event.pointerId)
 
     if (didDrag) {
-      snapToNearestStory()
+      releaseMomentum()
       window.setTimeout(() => {
         didDrag = false
       }, 0)
