@@ -269,7 +269,7 @@ export function initWorkCarrousel() {
     const delta = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX
 
     if (isMobile && delta) {
-      mobileMaskDirection = delta > 0 ? -1 : 1
+      mobileMaskDirection = delta > 0 ? 1 : 1
     }
 
     moveCarousel(delta)
