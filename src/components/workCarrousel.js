@@ -43,6 +43,7 @@ export function initWorkCarrousel() {
   )
   const setItemAutoAlpha = items.map((item) => gsap.quickSetter(item, 'autoAlpha'))
   const setLinkX = links.map((link) => gsap.quickSetter(link, 'xPercent'))
+  const setLinkY = links.map((link) => gsap.quickSetter(link, 'yPercent'))
   const setLinkClipPath = links.map((link) => gsap.quickSetter(link, 'clipPath'))
   const setContentOpacity = contentItems.map((item) => gsap.quickSetter(item, 'opacity'))
   const setThumbnailOpacity = thumbnailItems.map((item) => gsap.quickSetter(item, 'opacity'))
@@ -57,6 +58,7 @@ export function initWorkCarrousel() {
   let scrollTween = null
   let targetScroll = 0
   let lastTouchY = null
+  let isMobile = window.innerWidth <= 480
   const scrollState = { value: 0 }
   const previousBodyOverflow = document.body.style.overflow
   const previousHtmlOverflow = document.documentElement.style.overflow
@@ -77,8 +79,16 @@ export function initWorkCarrousel() {
 
   const resize = () => {
     step = window.innerHeight || 1
+    isMobile = window.innerWidth <= 480
     lenis.resize()
     render({ scroll: scrollState.value })
+  }
+
+  const setRevealClipPath = (setter, reveal) => {
+    setter(isMobile
+      ? `inset(${reveal}% 0 0 0)`
+      : `inset(0 0 0 ${reveal}%)`
+    )
   }
 
   const render = ({ scroll }) => {
@@ -106,8 +116,9 @@ export function initWorkCarrousel() {
       if (isIncoming) {
         const reveal = distance * 100
 
-        setLinkX[index](distance * 12)
-        setLinkClipPath[index](`inset(0 0 0 ${reveal}%)`)
+        setLinkX[index](isMobile ? 0 : distance * 12)
+        setLinkY[index](isMobile ? distance * 12 : 0)
+        setRevealClipPath(setLinkClipPath[index], reveal)
 
         item.style.zIndex = String(items.length + 1)
         item.style.pointerEvents = distance < 0.5 ? 'auto' : 'none'
@@ -115,7 +126,8 @@ export function initWorkCarrousel() {
       }
 
       if (isOutgoing) {
-        setLinkX[index](distance * 4)
+        setLinkX[index](isMobile ? 0 : distance * 4)
+        setLinkY[index](isMobile ? distance * 4 : 0)
         setLinkClipPath[index]('inset(0 0 0 0%)')
 
         item.style.zIndex = String(items.length)
@@ -124,7 +136,8 @@ export function initWorkCarrousel() {
       }
 
       setLinkX[index](0)
-      setLinkClipPath[index]('inset(0 0 0 100%)')
+      setLinkY[index](0)
+      setRevealClipPath(setLinkClipPath[index], 100)
       item.style.zIndex = '0'
       item.style.pointerEvents = 'none'
     })
@@ -150,7 +163,7 @@ export function initWorkCarrousel() {
       if (isIncoming) {
         const reveal = distance * 100
 
-        setThumbnailClipPath[index](`inset(0 0 0 ${reveal}%)`)
+        setRevealClipPath(setThumbnailClipPath[index], reveal)
         item.style.zIndex = String(thumbnailItems.length + 1)
         return
       }
@@ -161,7 +174,7 @@ export function initWorkCarrousel() {
         return
       }
 
-      setThumbnailClipPath[index]('inset(0 0 0 100%)')
+      setRevealClipPath(setThumbnailClipPath[index], 100)
       item.style.zIndex = '0'
     })
   }
