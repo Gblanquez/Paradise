@@ -20,6 +20,23 @@ const SELECTORS = {
   spacer: '[data-work-carrousel-spacer]',
 }
 
+const CSS_PROPS = {
+  clipPath: 'clip-path',
+  pointerEvents: 'pointer-events',
+  touchAction: 'touch-action',
+  overscrollBehavior: 'overscroll-behavior',
+  willChange: 'will-change',
+  zIndex: 'z-index',
+}
+
+function clearInlineProps(targets, props) {
+  gsap.utils.toArray(targets).forEach((target) => {
+    props.forEach((prop) => {
+      target.style.removeProperty(CSS_PROPS[prop] || prop)
+    })
+  })
+}
+
 export function initWorkCarrousel() {
   const list = document.querySelector(SELECTORS.list)
   const container = list?.closest(SELECTORS.container)
@@ -304,12 +321,12 @@ export function initWorkCarrousel() {
     if (preserveStyles) return
 
     spacer.remove()
-    gsap.set(container, { clearProps: 'position,inset,width,height,top,overflow,touchAction,overscrollBehavior,zIndex' })
-    gsap.set(list, { clearProps: 'height' })
-    gsap.set(items, { clearProps: 'opacity,visibility,willChange,zIndex,pointerEvents,left,top,width,height' })
-    gsap.set(links, { clearProps: 'display,width,height,overflow,willChange,transform,clipPath' })
-    gsap.set(contentItems, { clearProps: 'opacity,zIndex' })
-    gsap.set(thumbnailItems, { clearProps: 'opacity,zIndex' })
-    gsap.set(thumbnailContainers, { clearProps: 'willChange,clipPath' })
+    clearInlineProps(container, ['position', 'inset', 'width', 'height', 'top', 'overflow', 'touchAction', 'overscrollBehavior', 'zIndex'])
+    clearInlineProps(list, ['height'])
+    clearInlineProps(items, ['opacity', 'visibility', 'willChange', 'zIndex', 'pointerEvents', 'left', 'top', 'width', 'height'])
+    clearInlineProps(links, ['display', 'width', 'height', 'overflow', 'willChange', 'transform', 'clipPath'])
+    clearInlineProps(contentItems, ['opacity', 'zIndex'])
+    clearInlineProps(thumbnailItems, ['opacity', 'zIndex'])
+    clearInlineProps(thumbnailContainers, ['willChange', 'clipPath'])
   }
 }
