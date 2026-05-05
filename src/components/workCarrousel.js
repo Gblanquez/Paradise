@@ -78,6 +78,7 @@ export function initWorkCarrousel() {
   let scrollTween = null
   let targetScroll = 0
   let isMobile = window.innerWidth <= 480
+  let mobileMaskDirection = -1
   const scrollState = { value: 0 }
   const previousBodyOverflow = document.body.style.overflow
   const previousHtmlOverflow = document.documentElement.style.overflow
@@ -110,7 +111,10 @@ export function initWorkCarrousel() {
       return
     }
 
-    setter(`inset(${reveal}% 0 0 0)`)
+    setter(mobileMaskDirection > 0
+      ? `inset(${reveal}% 0 0 0)`
+      : `inset(0 0 ${reveal}% 0)`
+    )
   }
 
   const render = ({ scroll }) => {
@@ -263,6 +267,10 @@ export function initWorkCarrousel() {
     const deltaX = self.deltaX || 0
     const deltaY = self.deltaY || 0
     const delta = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX
+
+    if (isMobile && delta) {
+      mobileMaskDirection = delta > 0 ? -1 : 1
+    }
 
     moveCarousel(delta)
   }
