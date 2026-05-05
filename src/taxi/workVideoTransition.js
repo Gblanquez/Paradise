@@ -59,6 +59,16 @@ function getBufferedProgress(video) {
   return video.buffered.end(video.buffered.length - 1) / video.duration
 }
 
+function isVisible(element) {
+  return element && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+}
+
+function getVisibleElement(selector, root) {
+  const elements = gsap.utils.toArray(selector, root)
+
+  return elements.find(isVisible) || elements[0] || null
+}
+
 function waitForVideo(video) {
   return new Promise((resolve) => {
     let timeout = null
@@ -173,8 +183,8 @@ export function startWorkVideoLeave(from) {
 }
 
 export async function enterWorkVideo({ to, wrapper, done }) {
-  const videoParent = to.querySelector(SELECTORS.videoParent)
-  const video = to.querySelector(SELECTORS.video)
+  const videoParent = getVisibleElement(SELECTORS.videoParent, to)
+  const video = videoParent?.querySelector(SELECTORS.video) || getVisibleElement(SELECTORS.video, to)
 
   if (!videoParent || !video) {
     destroyTransitionLine()

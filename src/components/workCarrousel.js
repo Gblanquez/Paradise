@@ -37,9 +37,14 @@ function clearInlineProps(targets, props) {
   })
 }
 
+function isVisible(element) {
+  return element && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+}
+
 export function initWorkCarrousel() {
-  const list = document.querySelector(SELECTORS.list)
-  const container = list?.closest(SELECTORS.container)
+  const containers = gsap.utils.toArray(SELECTORS.container)
+  const container = containers.find(isVisible) || containers[0]
+  const list = container?.querySelector(SELECTORS.list)
 
   if (!list || !container) return () => {}
 

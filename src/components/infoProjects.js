@@ -9,11 +9,16 @@ const SELECTORS = {
   video: '.main-workp-video',
 }
 
+function isVisible(element) {
+  return element && element.getClientRects().length > 0 && getComputedStyle(element).display !== 'none'
+}
+
 export function initInfoProjects(root = document) {
   const container = root.querySelector(SELECTORS.container)
   const openToggle = root.querySelector(SELECTORS.openToggle)
   const closeToggle = root.querySelector(SELECTORS.closeToggle)
-  const video = root.querySelector(SELECTORS.video)
+  const videos = gsap.utils.toArray(SELECTORS.video, root)
+  const video = videos.find(isVisible) || videos[0]
 
   if (!container || !openToggle || !closeToggle) return () => {}
 
