@@ -6,6 +6,8 @@ const SELECTORS = {
   story: '.story-wrapper',
   video: '.vertical-video',
   line: '.load-vertical-line',
+  playToggleParent: '.play-toggle-parent',
+  playToggle: '[data-a="play-toggle"]',
 }
 
 const DRAG_THRESHOLD = 6
@@ -84,6 +86,8 @@ export function initVerticalVideos(root = document) {
     story,
     video: story.querySelector(SELECTORS.video),
     line: story.querySelector(SELECTORS.line),
+    playToggleParent: story.querySelector(SELECTORS.playToggleParent),
+    playToggle: story.querySelector(SELECTORS.playToggle),
     loadTween: null,
     lineTween: null,
     requestId: 0,
@@ -115,6 +119,40 @@ export function initVerticalVideos(root = document) {
   const setWrapperX = gsap.quickSetter(wrapper, 'x', 'px')
   const itemByStory = new Map(items.map((item) => [item.story, item]))
 
+  const setToggleLabel = (item, label) => {
+    if (!item?.playToggle) return
+
+    item.playToggle.textContent = label
+  }
+
+  const syncToggleLabels = () => {
+    items.forEach((item) => {
+      setToggleLabel(item, item === activeItem && !item.video.paused ? 'pause' : 'play')
+    })
+  }
+
+  const showToggle = (item) => {
+    if (!item?.playToggleParent) return
+
+    gsap.to(item.playToggleParent, {
+      opacity: 1,
+      duration: 0.25,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
+  const hideToggle = (item) => {
+    if (!item?.playToggleParent) return
+
+    gsap.to(item.playToggleParent, {
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
   const measure = () => {
     maxX = Math.max(0, wrapper.scrollWidth - container.clientWidth)
     currentX = clamp(currentX, -maxX, 0)
@@ -144,6 +182,7 @@ export function initVerticalVideos(root = document) {
     if (!item?.video) return
 
     item.video.pause()
+    syncToggleLabels()
   }
 
   const resetLine = (item) => {
@@ -173,6 +212,7 @@ export function initVerticalVideos(root = document) {
         item.video.pause()
         resetLine(item)
         activeItem = null
+        syncToggleLabels()
         return
       }
 
@@ -182,6 +222,8 @@ export function initVerticalVideos(root = document) {
         item.video.pause()
       }
 
+      syncToggleLabels()
+
       return
     }
 
@@ -189,6 +231,7 @@ export function initVerticalVideos(root = document) {
       activeItem.requestId += 1
       activeItem.isLoading = false
       activeItem.video.pause()
+      syncToggleLabels()
     }
 
     activeItem = item
@@ -204,7 +247,6 @@ export function initVerticalVideos(root = document) {
     })
 
     item.video.pause()
-    item.video.currentTime = 0
     item.video.playsInline = true
     item.video.setAttribute('playsinline', '')
     item.video.preload = 'auto'
@@ -246,10 +288,19 @@ export function initVerticalVideos(root = document) {
           overwrite: true,
           onComplete: () => {
             item.video.play().catch(() => {})
+            syncToggleLabels()
           },
         })
       },
     })
+  }
+
+  const handleStoryPointerEnter = (item) => {
+    showToggle(item)
+  }
+
+  const handleStoryPointerLeave = (item) => {
+    hideToggle(item)
   }
 
   const handlePointerDown = (event) => {
@@ -331,12 +382,21 @@ export function initVerticalVideos(root = document) {
     transformOrigin: 'right center',
   })
 
+  gsap.set(items.map(({ playToggleParent }) => playToggleParent).filter(Boolean), {
+    opacity: 0,
+  })
+
   items.forEach((item) => {
     item.video.pause()
     item.video.preload = 'auto'
     item.video.playsInline = true
     item.video.setAttribute('playsinline', '')
+    item.onPointerEnter = (event) => handleStoryPointerEnter(item, event)
+    item.onPointerLeave = () => handleStoryPointerLeave(item)
+    item.story.addEventListener('pointerenter', item.onPointerEnter)
+    item.story.addEventListener('pointerleave', item.onPointerLeave)
   })
+  syncToggleLabels()
 
   measure()
 
@@ -356,6 +416,8 @@ export function initVerticalVideos(root = document) {
         item.loadTween?.kill()
         item.lineTween?.kill()
         item.video.pause()
+        item.story.removeEventListener('pointerenter', item.onPointerEnter)
+        item.story.removeEventListener('pointerleave', item.onPointerLeave)
       })
       container.removeEventListener('pointerdown', handlePointerDown)
       container.removeEventListener('pointermove', handlePointerMove)
@@ -365,6 +427,7 @@ export function initVerticalVideos(root = document) {
       gsap.set(container, { clearProps: 'overflow,touchAction,cursor' })
       gsap.set(wrapper, { clearProps: 'display,willChange,transform' })
       gsap.set(items.map(({ line }) => line), { clearProps: 'width,scaleX,transformOrigin' })
+      gsap.set(items.map(({ playToggleParent }) => playToggleParent).filter(Boolean), { clearProps: 'opacity' })
     },
   }
 }

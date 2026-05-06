@@ -1,4 +1,6 @@
 import gsap from 'gsap'
+import { initInfoCarrousel } from './infoCarrousel.js'
+import { initInfoVideo } from './infoVideo.js'
 import { lenis } from './scroll.js'
 import { initVerticalVideos } from './verticalVideos.js'
 
@@ -40,6 +42,8 @@ export function initInfoProjects(root = document) {
   let activeTween = null
   let isOpen = !container.classList.contains('hide')
   let wasVideoPaused = video?.paused ?? true
+  let destroyInfoCarrousel = null
+  let infoVideo = null
   let verticalVideos = null
 
   const pauseVideo = () => {
@@ -62,8 +66,16 @@ export function initInfoProjects(root = document) {
     lenis.stop()
     pauseVideo()
 
+    if (!destroyInfoCarrousel) {
+      destroyInfoCarrousel = initInfoCarrousel(container)
+    }
+
     if (!verticalVideos) {
       verticalVideos = initVerticalVideos(container)
+    }
+
+    if (!infoVideo) {
+      infoVideo = initInfoVideo(container)
     }
 
     activeTween = gsap.fromTo(container,
@@ -80,7 +92,10 @@ export function initInfoProjects(root = document) {
   const closeInfo = () => {
     activeTween?.kill()
     isOpen = false
+    destroyInfoCarrousel?.()
+    destroyInfoCarrousel = null
     verticalVideos?.pause()
+    infoVideo?.pause()
 
     activeTween = gsap.to(container, {
       x: '100%',
@@ -138,6 +153,10 @@ export function initInfoProjects(root = document) {
     activeTween?.kill()
     lenis.start()
     resumeVideo()
+    destroyInfoCarrousel?.()
+    destroyInfoCarrousel = null
+    infoVideo?.destroy()
+    infoVideo = null
     verticalVideos?.destroy()
     verticalVideos = null
     openToggle.removeEventListener('click', onOpenClick)

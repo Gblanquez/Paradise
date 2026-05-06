@@ -1,8 +1,7 @@
 import gsap from 'gsap'
 
 const SELECTORS = {
-  container: '.reel-container',
-  video: '.reel',
+  video: '.info-video',
   line: '.reel-load-line',
   playToggleParent: '.play-toggle-parent',
   playToggle: '[data-a="play-toggle"]',
@@ -66,19 +65,30 @@ function waitForVideo(video, updateProgress) {
   })
 }
 
-export function initReel(root = document) {
-  const container = root.querySelector(SELECTORS.container)
-  const video = container?.querySelector(SELECTORS.video)
-  const line = container?.querySelector(SELECTORS.line)
-  const playToggleParent = container?.querySelector(SELECTORS.playToggleParent)
-  const playToggle = container?.querySelector(SELECTORS.playToggle)
+function getVideoScope(video, root) {
+  let element = video.parentElement
 
-  if (!container || !video || !line) {
-    return {
-      pause: () => {},
-      destroy: () => {},
+  while (element && element !== root && element !== document.body) {
+    if (
+      element.querySelector(SELECTORS.line)
+      && element.querySelector(SELECTORS.playToggleParent)
+    ) {
+      return element
     }
+
+    element = element.parentElement
   }
+
+  return video.parentElement || root
+}
+
+function createInfoVideo(video, root, pauseOthers) {
+  const scope = getVideoScope(video, root)
+  const line = scope?.querySelector(SELECTORS.line)
+  const playToggleParent = scope?.querySelector(SELECTORS.playToggleParent)
+  const playToggle = scope?.querySelector(SELECTORS.playToggle)
+
+  if (!scope || !line) return null
 
   let loadTween = null
   let lineTween = null
@@ -131,6 +141,8 @@ export function initReel(root = document) {
   }
 
   const pause = () => {
+    requestId += 1
+    isLoading = false
     video.pause()
     syncToggleLabel()
   }
@@ -148,6 +160,7 @@ export function initReel(root = document) {
     requestId += 1
     const activeRequest = requestId
 
+    pauseOthers(video)
     isLoading = true
     video.pause()
     video.preload = 'auto'
@@ -199,11 +212,8 @@ export function initReel(root = document) {
 
   const handleClick = () => {
     if (isLoading) {
-      requestId += 1
-      isLoading = false
       pause()
       resetLine()
-      syncToggleLabel()
       return
     }
 
@@ -226,27 +236,57 @@ export function initReel(root = document) {
     opacity: 0,
   })
 
-  container.addEventListener('click', handleClick)
-  container.addEventListener('pointerenter', showToggle)
-  container.addEventListener('pointerleave', hideToggle)
+  scope.addEventListener('click', handleClick)
+  scope.addEventListener('pointerenter', showToggle)
+  scope.addEventListener('pointerleave', hideToggle)
   video.addEventListener('play', syncToggleLabel)
   video.addEventListener('pause', syncToggleLabel)
 
   return {
+    video,
     pause,
     destroy: () => {
-      requestId += 1
-      isLoading = false
       pause()
-      container.removeEventListener('click', handleClick)
-      container.removeEventListener('pointerenter', showToggle)
-      container.removeEventListener('pointerleave', hideToggle)
+      scope.removeEventListener('click', handleClick)
+      scope.removeEventListener('pointerenter', showToggle)
+      scope.removeEventListener('pointerleave', hideToggle)
       video.removeEventListener('play', syncToggleLabel)
       video.removeEventListener('pause', syncToggleLabel)
       loadTween?.kill()
       lineTween?.kill()
       gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
       gsap.set(playToggleParent, { clearProps: 'opacity' })
+    },
+  }
+}
+
+export function initInfoVideo(root = document) {
+  const videos = gsap.utils.toArray(SELECTORS.video, root)
+  const players = []
+
+  const pauseOthers = (activeVideo) => {
+    players.forEach((player) => {
+      if (player.video !== activeVideo) {
+        player.pause()
+      }
+    })
+  }
+
+  videos.forEach((video) => {
+    const player = createInfoVideo(video, root, pauseOthers)
+
+    if (player) {
+      players.push(player)
+    }
+  })
+
+  return {
+    pause: () => {
+      players.forEach((player) => player.pause())
+    },
+    destroy: () => {
+      players.forEach((player) => player.destroy())
+      players.length = 0
     },
   }
 }
