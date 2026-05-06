@@ -33,7 +33,7 @@ export default class homeRender extends Renderer {
 
       this.destroyAboutSection()
       this.destroyAboutSection = () => {}
-      this.destroyWorkCarrousel({ preserveStyles: isWorkTransition })
+      this.destroyWorkCarrousel({ preserveStyles: true })
       this.destroyWorkCarrousel = () => {}
 
       transition.leave({ trigger, from: this.content })

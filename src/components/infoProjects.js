@@ -149,10 +149,12 @@ export function initInfoProjects(root = document) {
   })
   container.style.setProperty('-webkit-overflow-scrolling', 'touch')
 
-  return () => {
+  return ({ preserveStyles = false } = {}) => {
     activeTween?.kill()
     lenis.start()
-    resumeVideo()
+    if (!preserveStyles) {
+      resumeVideo()
+    }
     destroyInfoCarrousel?.()
     destroyInfoCarrousel = null
     infoVideo?.destroy()
@@ -163,6 +165,9 @@ export function initInfoProjects(root = document) {
     closeToggle.removeEventListener('click', onCloseClick)
     container.removeEventListener('wheel', handleWheel)
     container.removeEventListener('touchmove', stopScrollPropagation)
+
+    if (preserveStyles) return
+
     container.style.removeProperty('-webkit-overflow-scrolling')
     gsap.set(container, { clearProps: 'transform,height,maxHeight,overflowY,overflowX,overscrollBehavior' })
   }

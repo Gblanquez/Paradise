@@ -19,6 +19,37 @@ export default class workRender extends Renderer {
   }
 
   onLeave() {
+    // handled in leave() so open info panels can stay visually stable during work transitions
+  }
+
+  leave(transition, trigger, removeOldContent) {
+    return new Promise((resolve) => {
+      const transitionTrigger = trigger instanceof HTMLElement
+        ? trigger.closest('[data-transition]')
+        : null
+      const transitionName = transitionTrigger?.dataset.transition || false
+      const isWorkTransition = transitionName === 'workTransition' || transitionName === 'work'
+
+      this.destroyAboutSection()
+      this.destroyAboutSection = () => {}
+      this.destroyInfoProjects({ preserveStyles: isWorkTransition })
+      this.destroyInfoProjects = () => {}
+      this.destroyWorkVideoControls()
+      this.destroyWorkVideoControls = () => {}
+
+      transition.leave({ trigger, from: this.content })
+        .then(() => {
+          if (removeOldContent && !isWorkTransition) {
+            this.remove()
+          }
+
+          this.onLeaveCompleted()
+          resolve()
+        })
+    })
+  }
+
+  destroy() {
     this.destroyAboutSection()
     this.destroyAboutSection = () => {}
     this.destroyInfoProjects()

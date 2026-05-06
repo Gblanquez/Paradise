@@ -19,7 +19,7 @@ const taxi = new Core({
     work: workTransition,
     workTransition: workTransition
   },
-  removeOldContent: true,
+  removeOldContent: false,
 })
 
 export default taxi

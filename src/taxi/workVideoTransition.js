@@ -9,11 +9,13 @@ const SELECTORS = {
   videoScaleParent: '.video-parent',
   video: '.main-workp-video',
   revealUi: '.work-title-parent, .work-settings, .work-toggles-parent',
+  overlay: '.overlay',
 }
 
 let transitionLine = null
 let transitionLineParent = null
 let transitionLineTween = null
+let transitionOverlay = null
 
 function setLineProgress(progress) {
   if (!transitionLine) return
@@ -50,25 +52,7 @@ function destroyTransitionLine() {
   transitionLineTween = null
   transitionLine = null
   transitionLineParent = null
-}
-
-function createTransitionOverlay(to) {
-  const overlay = document.createElement('div')
-
-  overlay.setAttribute('aria-hidden', 'true')
-  overlay.dataset.workTransitionOverlay = ''
-  to.appendChild(overlay)
-
-  gsap.set(overlay, {
-    position: 'absolute',
-    inset: 0,
-    backgroundColor: '#000',
-    opacity: 0,
-    zIndex: 11,
-    pointerEvents: 'none',
-  })
-
-  return overlay
+  transitionOverlay = null
 }
 
 function getBufferedProgress(video) {
@@ -193,21 +177,34 @@ function prepareVideo(video) {
 }
 
 function getActiveContentItem(from) {
-  const contentItems = gsap.utils.toArray(SELECTORS.contentItem, from)
+  const contentItems = gsap.utils.toArray(SELECTORS.contentItem, from).filter(matchesCurrentViewport)
 
   return contentItems.find((item) => {
     const opacity = Number(gsap.getProperty(item, 'opacity'))
     const visibility = gsap.getProperty(item, 'visibility')
 
     return opacity > 0.5 && visibility !== 'hidden'
-  }) || contentItems[0] || from
+  }) || contentItems.find(isVisible) || contentItems[0] || getVisibleElement(SELECTORS.contentItem, from) || from
+}
+
+function getTransitionLine(from) {
+  const activeContentItem = getActiveContentItem(from)
+  const scopedLine = getVisibleElement(SELECTORS.line, activeContentItem)
+
+  return scopedLine || getVisibleElement(SELECTORS.line, from)
 }
 
 export function startWorkVideoLeave(from) {
-  const activeContentItem = getActiveContentItem(from)
-
-  transitionLine = activeContentItem.querySelector(SELECTORS.line)
+  transitionLine = getTransitionLine(from)
   transitionLineParent = transitionLine?.closest(SELECTORS.lineParent)
+  transitionOverlay = getVisibleElement(SELECTORS.overlay, from)
+
+  if (transitionOverlay) {
+    gsap.set(transitionOverlay, {
+      opacity: 0,
+      pointerEvents: 'none',
+    })
+  }
 
   if (!transitionLine) return
 
@@ -234,6 +231,7 @@ export async function enterWorkVideo({ to, wrapper, done }) {
   const videoScaleParent = videoParent?.querySelector(SELECTORS.videoScaleParent) || getVisibleElement(SELECTORS.videoScaleParent, to)
   const video = videoParent?.querySelector(SELECTORS.video) || getVisibleElement(SELECTORS.video, to)
   const revealUi = gsap.utils.toArray(SELECTORS.revealUi, to).filter(matchesCurrentViewport)
+  const incomingOverlays = gsap.utils.toArray(SELECTORS.overlay, to)
 
   if (!videoParent || !video) {
     destroyTransitionLine()
@@ -248,19 +246,22 @@ export async function enterWorkVideo({ to, wrapper, done }) {
     width: '100%',
     height: '100dvh',
     overflow: 'hidden',
-    zIndex: 11,
+    zIndex: 102,
   })
-
-  const overlay = createTransitionOverlay(to)
 
   gsap.set(revealUi, {
     opacity: 0,
   })
 
+  gsap.set(incomingOverlays, {
+    opacity: 0,
+    pointerEvents: 'none',
+  })
+
   gsap.set(videoParent, {
     position: 'absolute',
     inset: 0,
-    zIndex: 12,
+    zIndex: 103,
     pointerEvents: 'none',
     clipPath: 'inset(100% 0 0 0)',
     scale: 0.8,
@@ -280,11 +281,16 @@ export async function enterWorkVideo({ to, wrapper, done }) {
   await finishLineProgress()
   await startVideo(video)
 
+  if (transitionOverlay) {
+    gsap.set(transitionOverlay, {
+      opacity: 0,
+    })
+  }
+
   const tl = gsap.timeline({
     defaults: { ease: 'power3.inOut' },
     onComplete: () => {
       gsap.set(videoParent, { clearProps: 'position,inset,zIndex,willChange' })
-      overlay.remove()
       destroyTransitionLine()
       removeOldContent(wrapper, to)
       gsap.set(to, { clearProps: 'position,inset,width,height,overflow,zIndex' })
@@ -299,12 +305,6 @@ export async function enterWorkVideo({ to, wrapper, done }) {
       ease: 'power3.inOut',
     }, 0)
   }
-
-  tl.to(overlay, {
-    opacity: 0.7,
-    duration: 0.65,
-    ease: 'power2.out',
-  }, 0.25)
 
   tl.to(videoParent, {
     clipPath: 'inset(0% 0 0 0)',
