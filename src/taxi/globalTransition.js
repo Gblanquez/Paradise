@@ -1,14 +1,21 @@
 import { Transition } from '@unseenco/taxi'
 import gsap from 'gsap'
-import { removeOldContent } from './removeOldContent.js'
-
-const REVEAL = {
-  duration: 1,
-  ease: 'power3.inOut',
-}
+import { lenis } from '../components/scroll.js'
 
 const SELECTORS = {
-  transitionOverlay: '.white-overlay',
+  parent: '.page-load-parent',
+  boxOne: '.transition-box-one',
+  boxTwo: '.transition-box-two',
+}
+
+function getTransitionElements() {
+  const parent = document.querySelector(SELECTORS.parent)
+  const boxes = [
+    document.querySelector(SELECTORS.boxTwo),
+    document.querySelector(SELECTORS.boxOne),
+  ].filter(Boolean)
+
+  return { parent, boxes }
 }
 
 export default class globalTransition extends Transition {
@@ -17,11 +24,42 @@ export default class globalTransition extends Transition {
    * @param { { from: HTMLElement, trigger: string|HTMLElement|false, done: function } } props
    */
   onLeave({ from, trigger, done }) {
-    gsap.set(from, {
-      pointerEvents: 'none',
+    const { parent, boxes } = getTransitionElements()
+
+    if (!parent || !boxes.length) {
+      lenis.stop()
+      done()
+      return
+    }
+
+    gsap.killTweensOf([parent, ...boxes])
+    gsap.set(parent, {
+      display: 'block',
+      opacity: 1,
+      pointerEvents: 'auto',
+      visibility: 'visible',
+    })
+    gsap.set(boxes, {
+      yPercent: 110,
+      rotation: 45,
+      transformOrigin: 'left bottom',
     })
 
-    done()
+    gsap.to(boxes, {
+      yPercent: 0,
+      rotation: 0,
+      duration: 0.85,
+      ease: 'power3.inOut',
+      stagger: 0.08,
+      overwrite: true,
+      onStart: () => {
+        window.dispatchEvent(new CustomEvent('global-transition-cover-start'))
+      },
+      onComplete: () => {
+        lenis.stop()
+        done()
+      },
+    })
   }
 
   /**
@@ -29,30 +67,51 @@ export default class globalTransition extends Transition {
    * @param { { to: HTMLElement, trigger: string|HTMLElement|false, done: function } } props
    */
   onEnter({ to, trigger, done }) {
-    gsap.set(to, {
-      position: 'fixed',
-      inset: 0,
-      width: '100%',
-      height: '100dvh',
-      overflow: 'hidden',
-      zIndex: 102,
-      clipPath: 'inset(100% 0 0 0)',
-      willChange: 'clip-path',
+    const { parent, boxes } = getTransitionElements()
+
+    lenis.scrollTo(0, {
+      immediate: true,
+      force: true,
+    })
+    window.scrollTo(0, 0)
+
+    if (!parent || !boxes.length) {
+      lenis.start()
+      done()
+      return
+    }
+
+    gsap.killTweensOf([parent, ...boxes])
+    gsap.set(parent, {
+      display: 'block',
+      opacity: 1,
+      pointerEvents: 'auto',
+      visibility: 'visible',
+    })
+    gsap.set(boxes, {
+      yPercent: 0,
+      rotation: 0,
+      transformOrigin: 'left bottom',
     })
 
-    gsap.to(to, {
-      clipPath: 'inset(0% 0 0 0)',
-      duration: REVEAL.duration,
-      ease: REVEAL.ease,
+    gsap.to(parent, {
+      opacity: 0,
+      duration: 0.55,
+      ease: 'power2.out',
+      overwrite: true,
       onComplete: () => {
-        gsap.set(gsap.utils.toArray(SELECTORS.transitionOverlay, to), {
+        gsap.set(parent, {
+          display: 'none',
           opacity: 0,
           pointerEvents: 'none',
+          visibility: 'hidden',
         })
-        removeOldContent(this.wrapper, to)
-        gsap.set(to, {
-          clearProps: 'position,inset,width,height,overflow,zIndex,clipPath,willChange',
+        gsap.set(boxes, {
+          yPercent: 110,
+          rotation: 45,
+          clearProps: 'transformOrigin',
         })
+        lenis.start()
         done()
       },
     })

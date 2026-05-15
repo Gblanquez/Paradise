@@ -2,6 +2,11 @@
     --vw: 0.01vw;
 }
 
+.ft-project-parent
+{
+    pointer-events: none;
+}
+
 *
 {
   -webkit-font-smoothing: antialiased;
@@ -20,9 +25,13 @@ body {
   }
 
 .lk-hover-box,
+.transition-box-two,
+.global-box-two,
+.nav-box-two,
 .load-vertical-line,
 .reel-load-line,
 .line-video-load,
+.menu-box-two,
 .video-timeline {
   background:
     linear-gradient(

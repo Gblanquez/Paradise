@@ -9,7 +9,7 @@ const lenis = new Lenis({
   smoothWheel: true,
   smoothTouch: false,
   touchMultiplier: 2,
-  infinite: true,
+  infinite: false,
   overscroll: false,
   autoRaf: false,
 })
