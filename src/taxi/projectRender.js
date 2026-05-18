@@ -16,7 +16,7 @@ import { initTeamCarrousel } from '../components/teamCarrousel.js'
 import { initWhySection } from '../components/whySection.js'
 import titleTextReveal from '../components/titleText.js'
 
-export default class globalRender extends Renderer {
+export default class projectRender extends Renderer {
   destroyAlwaysSlider = () => {}
   destroyShowcaseSection = () => {}
   destroyTalent = () => {}

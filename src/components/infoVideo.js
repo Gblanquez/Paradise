@@ -2,7 +2,7 @@ import gsap from 'gsap'
 
 const SELECTORS = {
   video: '.info-video',
-  line: '.reel-load-line',
+  line: '.info-load-line',
   playToggleParent: '.play-toggle-parent',
   playToggle: '[data-a="play-toggle"]',
 }

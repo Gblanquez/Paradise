@@ -31,6 +31,8 @@ body {
 .load-vertical-line,
 .reel-load-line,
 .line-video-load,
+.info-load-line,
+.line-load-page,
 .menu-box-two,
 .video-timeline {
   background:
@@ -52,6 +54,25 @@ body {
   background-position: center;
 }
 
+.global-link-box
+{
+    mix-blend-mode: difference;
+    z-index: 1;
+}
+
+.menu-close-box
+{
+    mix-blend-mode: difference;
+    z-index: 1;
+}
+
+/* .page-load-parent {
+    display: flex;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    background: #000;
+  } */
 
 .team-container
 {

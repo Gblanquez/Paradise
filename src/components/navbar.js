@@ -1,13 +1,17 @@
 import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin'
 import { addScrollListener, lenis } from './scroll.js'
 
-gsap.registerPlugin(SplitText, ScrollTrigger)
+gsap.registerPlugin(SplitText, ScrollTrigger, MorphSVGPlugin)
 
 const SELECTORS = {
   openToggle: '.menu-open-toggle',
   closeToggle: '.menu-close-toggle',
+  closeBox: '.menu-close-box',
+  closeArrow: '.close-arrow-emb',
+  closePath: '.close-svg path',
   contentParent: '.navbar-content-parent',
   boxOne: '.nav-box-one',
   boxTwo: '.nav-box-two',
@@ -37,6 +41,8 @@ const GRADIENT = `linear-gradient(
   #2e8ef7 100%
 )`
 
+const CLOSE_CIRCLE_PATH = 'M15.2 7.5C15.2 11.4765 11.9765 14.7 8 14.7C4.02355 14.7 0.8 11.4765 0.8 7.5C0.8 3.52355 4.02355 0.3 8 0.3C11.9765 0.3 15.2 3.52355 15.2 7.5Z'
+
 function createGradientLayer(char) {
   if (!char.textContent.trim()) return null
 
@@ -64,7 +70,15 @@ export function initNavbar(root = document) {
   const openToggle = root.querySelector(SELECTORS.openToggle) || document.querySelector(SELECTORS.openToggle)
   const closeToggle = root.querySelector(SELECTORS.closeToggle) || document.querySelector(SELECTORS.closeToggle)
   const contentParent = root.querySelector(SELECTORS.contentParent) || document.querySelector(SELECTORS.contentParent)
+  const closeBox = closeToggle?.querySelector(SELECTORS.closeBox) || contentParent?.querySelector(SELECTORS.closeBox)
+  const closeArrow = closeToggle?.querySelector(SELECTORS.closeArrow) || contentParent?.querySelector(SELECTORS.closeArrow)
+  const closePath = closeToggle?.querySelector(SELECTORS.closePath) || contentParent?.querySelector(SELECTORS.closePath)
+  const closePathDefault = closePath?.getAttribute('d')
   const navBoxes = gsap.utils.toArray(`${SELECTORS.boxOne}, ${SELECTORS.boxTwo}`, contentParent || document)
+  const navBoxesOut = [
+    contentParent?.querySelector(SELECTORS.boxOne),
+    contentParent?.querySelector(SELECTORS.boxTwo),
+  ].filter(Boolean)
   const navLinks = gsap.utils.toArray(SELECTORS.link, contentParent || document)
   const navLabels = gsap.utils.toArray(SELECTORS.label, contentParent || document)
   const navImages = gsap.utils.toArray(SELECTORS.image, contentParent || document)
@@ -89,10 +103,12 @@ export function initNavbar(root = document) {
   let previousHtmlOverflow = ''
   let scrollTween = null
   let scrollTrigger = null
+  let closeBoxTween = null
   let removeScrollListener = () => {}
   let navLinksCollapsed = false
 
   gsap.set(navBoxes, {
+    y: '0%',
     yPercent: 110,
     rotation: 45,
     transformOrigin: 'left bottom',
@@ -100,10 +116,31 @@ export function initNavbar(root = document) {
   gsap.set(navLinks, { opacity: 0 })
   gsap.set(navOp, {
     opacity: 0,
-    clipPath: 'inset(100% 0% 0% 0%)',
-    overflow: 'hidden',
+    scale: 0,
+    rotation: 45,
+    transformOrigin: 'top right',
   })
   gsap.set(closeToggle, { opacity: 0 })
+  gsap.set(closePath || [], {
+    opacity: 1,
+    scale: 1,
+    rotation: 0,
+    transformOrigin: 'center center',
+  })
+  gsap.set(closeArrow || [], {
+    scale: 1,
+    rotation: 0,
+    transformOrigin: 'center center',
+    willChange: 'transform',
+  })
+  gsap.set(closeBox || [], {
+    scale: 0,
+    x: '20%',
+    y: '-50%',
+    rotation: 45,
+    transformOrigin: 'top right',
+    willChange: 'transform',
+  })
   gsap.set(navImages, {
     clipPath: 'inset(100% 0% 0% 0%)',
     overflow: 'hidden',
@@ -380,6 +417,18 @@ export function initNavbar(root = document) {
     lockScroll()
     buildNavText()
     buildNavLabels()
+    gsap.set(navOp, {
+      opacity: 0,
+      scale: 0,
+      rotation: 45,
+      transformOrigin: 'top right',
+    })
+    gsap.set(navBoxes, {
+      y: '0%',
+      yPercent: 110,
+      rotation: 45,
+      transformOrigin: 'left bottom',
+    })
 
     activeTween?.kill()
     activeTween = gsap.timeline()
@@ -407,11 +456,15 @@ export function initNavbar(root = document) {
       }, 0.18)
       .to(navOp, {
         opacity: 1,
-        clipPath: 'inset(0% 0% 0% 0%)',
-        duration: 0.45,
-        ease: 'power2.out',
+        scale: 1,
+        rotation: 0,
+        duration: 0.65,
+        ease: 'power3.out',
         stagger: 0.05,
         overwrite: true,
+        onComplete: () => {
+          gsap.set(navOp, { clearProps: 'willChange' })
+        },
       }, 1.05)
       .to(navLabelLines, {
         yPercent: 0,
@@ -438,24 +491,136 @@ export function initNavbar(root = document) {
 
     isOpen = false
     activeTween?.kill()
+    closeBoxTween?.kill()
     navTextTweens.forEach((tween) => tween.kill())
     navTextTweens = []
-    gsap.set(navBoxes, { yPercent: 110, rotation: 45 })
-    gsap.set(navLinks, { opacity: 0 })
-    gsap.set(navOp, { opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' })
-    gsap.set(closeToggle, { opacity: 0 })
-    gsap.set(navImages, { clipPath: 'inset(100% 0% 0% 0%)' })
-    cleanupNavText()
-    cleanupNavLabels()
-    contentParent.style.display = 'none'
 
-    if (restartScroll) {
-      unlockScroll()
-    } else {
-      unlockScrollStyles()
-    }
+    const navTextChars = navTextGroups.flatMap(({ split }) => split.chars)
 
-    return Promise.resolve()
+    return new Promise((resolve) => {
+      activeTween = gsap.timeline({
+        onComplete: () => {
+          gsap.set(navBoxes, {
+            y: '0%',
+            yPercent: 110,
+            rotation: 45,
+            transformOrigin: 'left bottom',
+          })
+          gsap.set(navLinks, { opacity: 0 })
+          gsap.set(navOp, {
+            opacity: 0,
+            scale: 0,
+            rotation: 45,
+            transformOrigin: 'top right',
+          })
+          gsap.set(closeToggle, { opacity: 0 })
+          gsap.set(closeBox || [], {
+            scale: 0,
+            x: '20%',
+            y: '-50%',
+            rotation: 45,
+            transformOrigin: 'top right',
+          })
+          if (closePathDefault) {
+            gsap.set(closePath || [], { attr: { d: closePathDefault }, opacity: 1, scale: 1, rotation: 0 })
+          }
+          gsap.set(closeArrow || [], { scale: 1, rotation: 0 })
+          gsap.set(navImages, { clipPath: 'inset(100% 0% 0% 0%)' })
+
+          cleanupNavText()
+          cleanupNavLabels()
+          contentParent.style.display = 'none'
+
+          if (restartScroll) {
+            unlockScroll()
+          } else {
+            unlockScrollStyles()
+          }
+
+          resolve()
+        },
+      })
+        .to(closeToggle, {
+          opacity: 0,
+          duration: 0.25,
+          ease: 'power2.out',
+          overwrite: true,
+        }, 0)
+        .to(closeBox || [], {
+          scale: 0,
+          x: '20%',
+          y: '-50%',
+          rotation: 45,
+          duration: 0.3,
+          ease: 'power3.in',
+          overwrite: true,
+        }, 0)
+        .to(closePath || [], {
+          opacity: 1,
+          scale: 1,
+          rotation: 0,
+          morphSVG: {
+            shape: closePathDefault,
+            shapeIndex: 'auto',
+          },
+          duration: 0.3,
+          ease: 'power3.in',
+          overwrite: true,
+        }, 0)
+        .to(closeArrow || [], {
+          scale: 1,
+          rotation: 0,
+          duration: 0.3,
+          ease: 'power3.in',
+          overwrite: true,
+        }, 0)
+        .to(navOp, {
+          opacity: 0,
+          scale: 0,
+          rotation: 45,
+          duration: 0.3,
+          ease: 'power3.in',
+          stagger: 0.025,
+          overwrite: true,
+        }, 0)
+        .to(navLinks, {
+          opacity: 0,
+          duration: 0.25,
+          ease: 'power2.out',
+          stagger: 0.02,
+          overwrite: true,
+        }, 0)
+        .to(navTextChars, {
+          yPercent: -110,
+          duration: 0.32,
+          ease: 'power3.in',
+          stagger: 0.006,
+          overwrite: true,
+        }, 0)
+        .to(navLabelLines, {
+          yPercent: 110,
+          opacity: 0,
+          duration: 0.32,
+          ease: 'power3.in',
+          stagger: 0.018,
+          overwrite: true,
+        }, 0)
+        .to(navImages, {
+          clipPath: 'inset(100% 0% 0% 0%)',
+          duration: 0.35,
+          ease: 'power3.inOut',
+          stagger: 0.035,
+          overwrite: true,
+        }, 0)
+        .to(navBoxesOut, {
+          y: '110%',
+          rotation: 45,
+          duration: 0.58,
+          ease: 'power3.inOut',
+          stagger: 0.07,
+          overwrite: true,
+        }, 0.36)
+    })
   }
 
   const removeHoverListeners = navLinks.map((link) => {
@@ -536,6 +701,70 @@ export function initNavbar(root = document) {
   openToggle.addEventListener('click', openMenu)
   closeToggle.addEventListener('click', closeMenu)
 
+  const showCloseBox = () => {
+    closeBoxTween?.kill()
+    closeBoxTween = gsap.timeline({
+      defaults: {
+        duration: 0.5,
+        ease: 'power3.inOut',
+        overwrite: true,
+      },
+    })
+      .to(closeBox || [], {
+        scale: 1.3,
+        x: '0%',
+        y: '0%',
+        rotation: 0,
+      }, 0)
+      .to(closePath || [], {
+        opacity: 1,
+        scale: 1,
+        rotation: 0,
+        morphSVG: {
+          shape: CLOSE_CIRCLE_PATH,
+          shapeIndex: 'auto',
+        },
+      }, 0)
+      .to(closeArrow || [], {
+        scale: 0.5,
+      }, 0)
+  }
+
+  const hideCloseBox = () => {
+    closeBoxTween?.kill()
+    closeBoxTween = gsap.timeline({
+      defaults: {
+        duration: 0.45,
+        ease: 'power3.inOut',
+        overwrite: true,
+      },
+    })
+      .to(closeBox || [], {
+        scale: 0,
+        x: '20%',
+        y: '-50%',
+        rotation: 45,
+      }, 0)
+      .to(closePath || [], {
+        opacity: 1,
+        scale: 1,
+        rotation: 0,
+        morphSVG: {
+          shape: closePathDefault,
+          shapeIndex: 'auto',
+        },
+      }, 0)
+      .to(closeArrow || [], {
+        scale: 1,
+        rotation: 0,
+      }, 0)
+  }
+
+  closeToggle.addEventListener('pointerenter', showCloseBox)
+  closeToggle.addEventListener('pointerleave', hideCloseBox)
+  closeToggle.addEventListener('focus', showCloseBox)
+  closeToggle.addEventListener('blur', hideCloseBox)
+
   const closeMenuDuringTransition = () => {
     closeMenu({ restartScroll: false })
   }
@@ -544,6 +773,7 @@ export function initNavbar(root = document) {
 
   return () => {
     activeTween?.kill()
+    closeBoxTween?.kill()
     scrollTween?.kill()
     scrollTrigger?.kill()
     removeScrollListener()
@@ -552,6 +782,10 @@ export function initNavbar(root = document) {
     removeHoverListeners.forEach((removeListener) => removeListener())
     openToggle.removeEventListener('click', openMenu)
     closeToggle.removeEventListener('click', closeMenu)
+    closeToggle.removeEventListener('pointerenter', showCloseBox)
+    closeToggle.removeEventListener('pointerleave', hideCloseBox)
+    closeToggle.removeEventListener('focus', showCloseBox)
+    closeToggle.removeEventListener('blur', hideCloseBox)
     window.removeEventListener('global-transition-cover-start', closeMenuDuringTransition)
 
     if (isOpen) {
@@ -560,8 +794,13 @@ export function initNavbar(root = document) {
 
     gsap.set(navBoxes, { clearProps: 'transform,transformOrigin' })
     gsap.set(navLinks, { clearProps: 'opacity' })
-    gsap.set(navOp, { clearProps: 'opacity,clipPath,overflow' })
+    gsap.set(navOp, { clearProps: 'opacity,transform,transformOrigin,willChange' })
     gsap.set(closeToggle, { clearProps: 'opacity' })
+    gsap.set(closeBox || [], { clearProps: 'transform,transformOrigin,willChange' })
+    gsap.set(closeArrow || [], { clearProps: 'transform,transformOrigin,willChange' })
+    if (closePathDefault) {
+      gsap.set(closePath || [], { attr: { d: closePathDefault }, clearProps: 'opacity,transform,transformOrigin' })
+    }
     gsap.set(navImages, { clearProps: 'clipPath,overflow' })
     gsap.set(linksHolder, { clearProps: 'display,overflow,clipPath' })
     gsap.set(linkChildren, { clearProps: 'transform,opacity' })

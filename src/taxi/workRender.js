@@ -3,6 +3,8 @@ import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
 import { initGlobalLink } from '../components/globalLink.js'
+import { initInfoCarrousel } from '../components/infoCarrousel.js'
+import { initInfoVideo } from '../components/infoVideo.js'
 import { initLines } from '../components/lines.js'
 import { afterInitialLoad, initLoadAnimation } from '../components/load.js'
 import { initNavbar } from '../components/navbar.js'
@@ -14,9 +16,10 @@ import { initTalent } from '../components/talent.js'
 import { initWorkCarrousel } from '../components/workCarrousel.js'
 import { initTeamCarrousel } from '../components/teamCarrousel.js'
 import { initWhySection } from '../components/whySection.js'
+import { initVerticalVideos } from '../components/verticalVideos.js'
 import titleTextReveal from '../components/titleText.js'
 
-export default class globalRender extends Renderer {
+export default class workRender extends Renderer {
   destroyAlwaysSlider = () => {}
   destroyShowcaseSection = () => {}
   destroyTalent = () => {}
@@ -29,6 +32,9 @@ export default class globalRender extends Renderer {
   destroyReel = () => {}
   destroyCta = () => {}
   destroyLines = () => {}
+  destroyInfoCarrousel = () => {}
+  destroyInfoVideo = () => {}
+  destroyVerticalVideos = () => {}
   destroyLoadAnimation = () => {}
   isLeaving = false
 
@@ -37,10 +43,18 @@ export default class globalRender extends Renderer {
     this.isLeaving = false
     initScaling()
     startRAF()
+
     this.destroyGlobalLink = initGlobalLink(this.content)
     this.destroyNavbar = initNavbar(document)
     this.destroyReel = initReel(document).destroy
     this.destroyCta = initCta(this.content)
+    this.destroyInfoCarrousel = initInfoCarrousel(this.content)
+
+    const infoVideo = initInfoVideo(this.content)
+    this.destroyInfoVideo = () => infoVideo.destroy()
+
+    const verticalVideos = initVerticalVideos(this.content)
+    this.destroyVerticalVideos = () => verticalVideos.destroy()
     this.destroyLoadAnimation = initLoadAnimation(this.content)
 
     afterInitialLoad(() => {
@@ -48,12 +62,6 @@ export default class globalRender extends Renderer {
 
       this.destroyTitleText = titleTextReveal(this.content)
       this.destroyBodyText = bodyTextReveal(this.content)
-      initTeamCarrousel()
-      this.destroyAlwaysSlider = initAlwaysSlider(this.content)
-      this.destroyShowcaseSection = initShowcaseSection(this.content)
-      this.destroyTalent = initTalent(this.content)
-      this.destroyWhySection = initWhySection(this.content)
-      this.destroyWorkCarrousel = initWorkCarrousel(this.content)
       this.destroyLines = initLines(this.content)
     })
   }
@@ -80,16 +88,7 @@ export default class globalRender extends Renderer {
   onLeave() {
     // basic Taxi renderer
     this.isLeaving = true
-    this.destroyAlwaysSlider()
-    this.destroyAlwaysSlider = () => {}
-    this.destroyShowcaseSection()
-    this.destroyShowcaseSection = () => {}
-    this.destroyTalent()
-    this.destroyTalent = () => {}
-    this.destroyWhySection()
-    this.destroyWhySection = () => {}
-    this.destroyWorkCarrousel()
-    this.destroyWorkCarrousel = () => {}
+
     this.destroyGlobalLink()
     this.destroyGlobalLink = () => {}
     this.destroyTitleText()
@@ -104,6 +103,12 @@ export default class globalRender extends Renderer {
     this.destroyCta = () => {}
     this.destroyLines()
     this.destroyLines = () => {}
+    this.destroyInfoCarrousel()
+    this.destroyInfoCarrousel = () => {}
+    this.destroyInfoVideo()
+    this.destroyInfoVideo = () => {}
+    this.destroyVerticalVideos()
+    this.destroyVerticalVideos = () => {}
     this.destroyLoadAnimation()
     this.destroyLoadAnimation = () => {}
   }

@@ -78,7 +78,8 @@ export function initInfoCarrousel(root = document) {
     gsap.set(items[activeIndex], { opacity: 1, visibility: 'visible' })
     gsap.set(imageWrappers[activeIndex], {
       clipPath: 'inset(0 0 0 100%)',
-      willChange: 'clip-path',
+      scale: 1.5,
+      willChange: 'clip-path, transform',
     })
 
     const nextThumbnailIndex = thumbnailItems.length
@@ -107,7 +108,7 @@ export function initInfoCarrousel(root = document) {
             items[wrappedIndex].style.zIndex = '0'
             items[wrappedIndex].style.pointerEvents = 'none'
             gsap.set(items[wrappedIndex], { opacity: 0, visibility: 'hidden' })
-            gsap.set(imageWrappers[wrappedIndex], { clipPath: 'inset(0 0 0 100%)' })
+            gsap.set(imageWrappers[wrappedIndex], { clipPath: 'inset(0 0 0 100%)', scale: 1 })
           }
 
           if (nextThumbnailIndex !== gsap.utils.wrap(0, thumbnailItems.length || 1, activeIndex + 1)) {
@@ -133,7 +134,7 @@ export function initInfoCarrousel(root = document) {
           item.style.zIndex = '0'
           item.style.pointerEvents = 'none'
           gsap.set(item, { opacity: 0, visibility: 'hidden' })
-          gsap.set(imageWrappers[index], { clipPath: 'inset(0 0 0 100%)' })
+          gsap.set(imageWrappers[index], { clipPath: 'inset(0 0 0 100%)', scale: 1 })
         })
 
         zIndex = items.length
@@ -145,6 +146,7 @@ export function initInfoCarrousel(root = document) {
 
     tween.to(imageWrappers[activeIndex], {
       clipPath: 'inset(0 0 0 0%)',
+      scale: 1,
       duration: 0.85,
     }, 0)
 
@@ -176,7 +178,8 @@ export function initInfoCarrousel(root = document) {
   })
   gsap.set(imageWrappers, {
     overflow: 'hidden',
-    willChange: 'clip-path',
+    willChange: 'clip-path, transform',
+    scale: 1,
   })
   gsap.set(thumbnailWrappers, {
     overflow: 'hidden',
@@ -209,7 +212,7 @@ export function initInfoCarrousel(root = document) {
     thumbnailHandlers.forEach((removeHandler) => removeHandler())
     gsap.set(list, { clearProps: 'height' })
     gsap.set(items, { clearProps: 'width,height,willChange,opacity,visibility,zIndex,pointerEvents' })
-    gsap.set(imageWrappers, { clearProps: 'overflow,willChange,clipPath' })
+    gsap.set(imageWrappers, { clearProps: 'overflow,willChange,clipPath,transform' })
     gsap.set(thumbnailItems, { clearProps: 'opacity,zIndex,pointerEvents' })
     gsap.set(thumbnailWrappers, { clearProps: 'overflow,willChange,clipPath' })
   }
