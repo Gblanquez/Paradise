@@ -31,7 +31,9 @@ export function initWorkCarrousel(root = document) {
   let maxX = 0
   let isDragging = false
   let didDrag = false
+  let suppressClickUntil = 0
   let dragPointerId = null
+  let hasPointerCapture = false
   let listTween = null
 
   const dragContent = gsap.utils.toArray('a, img, video', parent)
@@ -100,7 +102,6 @@ export function initWorkCarrousel(root = document) {
     lastDragX = event.clientX
     lastDragTime = performance.now()
     dragVelocity = 0
-    parent.setPointerCapture?.(dragPointerId)
   }
 
   const handlePointerMove = (event) => {
@@ -113,7 +114,12 @@ export function initWorkCarrousel(root = document) {
     if (Math.abs(deltaY) > Math.abs(deltaX)) return
 
     event.preventDefault()
-    didDrag = true
+
+    if (!didDrag) {
+      didDrag = true
+      parent.setPointerCapture?.(dragPointerId)
+      hasPointerCapture = true
+    }
 
     const now = performance.now()
     const elapsed = Math.max(16, now - lastDragTime)
@@ -130,14 +136,18 @@ export function initWorkCarrousel(root = document) {
 
     isDragging = false
     dragPointerId = null
-    parent.releasePointerCapture?.(event.pointerId)
+
+    if (hasPointerCapture) {
+      parent.releasePointerCapture?.(event.pointerId)
+      hasPointerCapture = false
+    }
 
     if (didDrag) {
+      suppressClickUntil = performance.now() + 250
       releaseMomentum()
-      window.setTimeout(() => {
-        didDrag = false
-      }, 0)
     }
+
+    didDrag = false
   }
 
   const handleNativeDrag = (event) => {
@@ -145,7 +155,7 @@ export function initWorkCarrousel(root = document) {
   }
 
   const handleClick = (event) => {
-    if (!didDrag) return
+    if (performance.now() > suppressClickUntil) return
 
     event.preventDefault()
     event.stopPropagation()
@@ -180,7 +190,7 @@ export function initWorkCarrousel(root = document) {
   dragContent.forEach((element) => element.setAttribute('draggable', 'false'))
   measure()
 
-  parent.addEventListener('pointerdown', handlePointerDown, true)
+  parent.addEventListener('pointerdown', handlePointerDown)
   parent.addEventListener('pointermove', handlePointerMove)
   parent.addEventListener('pointerup', handlePointerUp)
   parent.addEventListener('pointercancel', handlePointerUp)
@@ -188,9 +198,9 @@ export function initWorkCarrousel(root = document) {
   parent.addEventListener('click', handleClick, true)
   window.addEventListener('resize', measure)
 
-  return () => {
+  return ({ preserveStyles = false } = {}) => {
     listTween?.kill()
-    parent.removeEventListener('pointerdown', handlePointerDown, true)
+    parent.removeEventListener('pointerdown', handlePointerDown)
     parent.removeEventListener('pointermove', handlePointerMove)
     parent.removeEventListener('pointerup', handlePointerUp)
     parent.removeEventListener('pointercancel', handlePointerUp)
@@ -198,6 +208,9 @@ export function initWorkCarrousel(root = document) {
     parent.removeEventListener('click', handleClick, true)
     window.removeEventListener('resize', measure)
     dragContent.forEach((element) => element.removeAttribute('draggable'))
+
+    if (preserveStyles) return
+
     gsap.set(parent, { clearProps: 'overflow,touchAction,cursor,userSelect' })
     gsap.set(list, { clearProps: 'willChange,transform' })
     gsap.set(items, { clearProps: 'overflow' })

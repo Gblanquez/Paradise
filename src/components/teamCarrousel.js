@@ -31,9 +31,11 @@ export function initTeamCarrousel(root = document) {
   let maxX = 0
   let isDragging = false
   let didDrag = false
+  let suppressClickUntil = 0
   let dragPointerId = null
   let listTween = null
 
+  const dragContent = gsap.utils.toArray('a, img, video', parent)
   const setListX = gsap.quickSetter(list, 'x', 'px')
 
   const measure = () => {
@@ -108,17 +110,29 @@ export function initTeamCarrousel(root = document) {
     parent.releasePointerCapture?.(event.pointerId)
 
     if (didDrag) {
+      suppressClickUntil = performance.now() + 250
       releaseMomentum()
-      window.setTimeout(() => {
-        didDrag = false
-      }, 0)
     }
+
+    didDrag = false
+  }
+
+  const handleNativeDrag = (event) => {
+    event.preventDefault()
+  }
+
+  const handleClick = (event) => {
+    if (performance.now() > suppressClickUntil) return
+
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   gsap.set(parent, {
     overflow: 'hidden',
     touchAction: 'pan-y',
     cursor: 'grab',
+    userSelect: 'none',
   })
 
   gsap.set(list, {
@@ -126,12 +140,20 @@ export function initTeamCarrousel(root = document) {
     willChange: 'transform',
   })
 
+  gsap.set(dragContent, {
+    userSelect: 'none',
+    WebkitUserDrag: 'none',
+  })
+
+  dragContent.forEach((element) => element.setAttribute('draggable', 'false'))
   measure()
 
   parent.addEventListener('pointerdown', handlePointerDown)
   parent.addEventListener('pointermove', handlePointerMove)
   parent.addEventListener('pointerup', handlePointerUp)
   parent.addEventListener('pointercancel', handlePointerUp)
+  parent.addEventListener('dragstart', handleNativeDrag)
+  parent.addEventListener('click', handleClick, true)
   window.addEventListener('resize', measure)
 
   return () => {
@@ -140,8 +162,12 @@ export function initTeamCarrousel(root = document) {
     parent.removeEventListener('pointermove', handlePointerMove)
     parent.removeEventListener('pointerup', handlePointerUp)
     parent.removeEventListener('pointercancel', handlePointerUp)
+    parent.removeEventListener('dragstart', handleNativeDrag)
+    parent.removeEventListener('click', handleClick, true)
     window.removeEventListener('resize', measure)
-    gsap.set(parent, { clearProps: 'overflow,touchAction,cursor' })
+    dragContent.forEach((element) => element.removeAttribute('draggable'))
+    gsap.set(parent, { clearProps: 'overflow,touchAction,cursor,userSelect' })
     gsap.set(list, { clearProps: 'display,willChange,transform' })
+    gsap.set(dragContent, { clearProps: 'userSelect,WebkitUserDrag' })
   }
 }

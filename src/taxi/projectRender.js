@@ -88,7 +88,7 @@ export default class projectRender extends Renderer {
     this.destroyTalent = () => {}
     this.destroyWhySection()
     this.destroyWhySection = () => {}
-    this.destroyWorkCarrousel()
+    this.destroyWorkCarrousel({ preserveStyles: true })
     this.destroyWorkCarrousel = () => {}
     this.destroyGlobalLink()
     this.destroyGlobalLink = () => {}
