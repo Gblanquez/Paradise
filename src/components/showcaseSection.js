@@ -45,20 +45,26 @@ export function initShowcaseSection(root = document) {
   }
 
   gsap.set(imageFrame, {
+    clipPath: 'polygon(15% 0%, 85% 0%, 85% 100%, 15% 100%)',
     transformOrigin: 'center center',
+    willChange: 'clip-path, transform',
   })
 
   const movementTl = gsap.timeline({
     scrollTrigger: {
       trigger: spacer,
       start: 'top bottom',
-      end: 'bottom top',
+      end: 'bottom 20%',
       scrub: true,
       invalidateOnRefresh: true,
     },
   })
 
-  movementTl.to(imageFrame, { scale: 1.2, ease: 'none' }, 0)
+  movementTl.to(imageFrame, {
+    clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+    scale: 1.2,
+    ease: 'none',
+  }, 0)
 
   if (imageContainer) {
     movementTl.to(imageContainer, { y: '80%', ease: 'none' }, 0)
@@ -103,7 +109,7 @@ export function initShowcaseSection(root = document) {
     movementTl.scrollTrigger?.kill()
     movementTl.kill()
     imageTrigger?.kill()
-    gsap.set(imageFrame, { clearProps: 'transform,transformOrigin' })
+    gsap.set(imageFrame, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
     gsap.set(imageContainer, { clearProps: 'position,transform,willChange' })
     gsap.set(images, { clearProps: 'position,inset,width,height,display,zIndex' })
   }

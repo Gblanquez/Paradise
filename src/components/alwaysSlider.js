@@ -16,7 +16,7 @@ const SELECTORS = {
   line: '[data-a="always-line"]',
 }
 
-const SLIDE_DURATION = 4
+const SLIDE_DURATION = 10
 
 function getItems(parent, selector) {
   return gsap.utils.toArray(selector, parent)
@@ -93,10 +93,10 @@ export function initAlwaysSlider(root = document) {
     const bodies = getContentItems(parent, SELECTORS.body)
     const images = getContentItems(parent, SELECTORS.image)
     const labels = getContentItems(parent, SELECTORS.label)
-    const line = parent.querySelector(SELECTORS.line)
-    const slideCount = getSlideCount([titles, bodies, images, labels])
+    const lines = getItems(parent, SELECTORS.line)
+    const slideCount = getSlideCount([titles, bodies, images, labels, lines])
 
-    if (!slideCount || slideCount < 2 || !line) {
+    if (!slideCount || slideCount < 2 || !lines.length) {
       return { destroy: () => {} }
     }
 
@@ -131,13 +131,63 @@ export function initAlwaysSlider(root = document) {
       )
     }
 
-    const startTimer = () => {
+    const resetInactiveLines = (previousIndex, immediate = false) => {
+      const outgoingLine = lines[previousIndex]
+
+      lines.forEach((line, index) => {
+        if (index === activeIndex) return
+
+        if (index !== previousIndex || immediate) {
+          gsap.set(line, {
+            width: '0%',
+            scaleX: 1,
+            x: '0%',
+            transformOrigin: 'left center',
+          })
+        }
+      })
+
+      if (!outgoingLine || outgoingLine === lines[activeIndex] || immediate) {
+        return gsap.timeline()
+      }
+
+      gsap.timeline({ overwrite: true })
+        .to(outgoingLine, {
+          width: '100%',
+          scaleX: 1,
+          x: '40vw',
+          transformOrigin: 'left center',
+          duration: 1.4,
+          ease: 'power3.inOut',
+        })
+        .set(outgoingLine, {
+          width: '0%',
+          scaleX: 1,
+          x: '0%',
+          transformOrigin: 'left center',
+        })
+
+      return gsap.timeline()
+    }
+
+    const startTimer = (previousIndex, immediate = false) => {
       timerTween?.kill()
-      gsap.set(line, { width: '0%' })
+      resetInactiveLines(previousIndex, immediate)
+
+      const activeLine = lines[activeIndex]
+
+      if (!activeLine) return
 
       if (!isActive) return
 
-      timerTween = gsap.to(line, {
+      gsap.set(activeLine, {
+        width: '0%',
+        scaleX: 1,
+        x: '0%',
+        transformOrigin: 'left center',
+      })
+
+      timerTween = gsap.to(activeLine, {
         width: '100%',
         duration: SLIDE_DURATION,
         ease: 'none',
@@ -148,6 +198,8 @@ export function initAlwaysSlider(root = document) {
     }
 
     const showSlide = (nextIndex, immediate = false) => {
+      const previousIndex = activeIndex
+
       activeIndex = nextIndex
       slideTween?.kill()
 
@@ -161,7 +213,7 @@ export function initAlwaysSlider(root = document) {
         animateText(activeIndex)
       }
 
-      startTimer()
+      startTimer(previousIndex, immediate)
     }
 
     thumbnails.forEach((thumbnail, index) => {
@@ -214,8 +266,11 @@ export function initAlwaysSlider(root = document) {
       timerTween?.pause()
     }
 
-    gsap.set(line, {
+    gsap.set(lines, {
       width: '0%',
+      scaleX: 1,
+      x: '0%',
+      transformOrigin: 'left center',
     })
 
     showSlide(0, true)
@@ -246,7 +301,7 @@ export function initAlwaysSlider(root = document) {
           thumbnail.removeEventListener('focusin', showThumbText)
           thumbnail.removeEventListener('focusout', hideThumbText)
         })
-        gsap.set(line, { clearProps: 'width' })
+        gsap.set(lines, { clearProps: 'width,transform,transformOrigin' })
         gsap.set([thumbnails, titles, bodies, images, labels].flat(), { clearProps: 'opacity,visibility,pointerEvents,zIndex' })
         gsap.set(thumbTexts, { clearProps: 'opacity' })
         textSplits.forEach(({ split }) => split.revert())
