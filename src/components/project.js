@@ -1,28 +1,34 @@
 import gsap from 'gsap'
+import { Flip } from 'gsap/Flip'
+
+gsap.registerPlugin(Flip)
 
 const SELECTORS = {
+  list: '.wk-collection-list',
+  item: '.wk-collection-item',
   link: '.wk-link',
-  linkHoverBox: '.lk-hover-box',
-  videoItem: '.wk-video-item',
-  videoChild: '.wk-video-child',
-  video: '.main-thumbnail-video',
+  frame: '.ft-project-parent',
+  cText: '[data-a="c-text"]',
   projectNumber: '[data-a="project-number"]',
-  videoTime: '[data-a="video-time"]',
-  category: '[data="category"]',
+  category: '[data-category]',
   allCategory: '[data="all-category"]',
+  categoryItem: '.category-list-item',
+  categoryLine: '.category-line',
+}
+
+const FILTERED_FRAME_SIZES = {
+  active: {
+    width: '32vw',
+    height: '18vw',
+  },
+  inactive: {
+    width: '12vw',
+    height: '6vw',
+  },
 }
 
 function formatIndex(index, padLength) {
   return String(index + 1).padStart(padLength, '0')
-}
-
-function formatTime(seconds) {
-  if (!Number.isFinite(seconds)) return '0:00'
-
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0')
-
-  return `${minutes}:${remainingSeconds}`
 }
 
 function getPadLength(links) {
@@ -36,34 +42,181 @@ function getPadLength(links) {
 }
 
 function normalizeCategory(text) {
-  return text.trim().toLowerCase()
+  return text.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+function getCategoryText(element) {
+  if (!element) return ''
+
+  const clone = element.cloneNode(true)
+
+  clone.querySelectorAll(SELECTORS.categoryLine).forEach((line) => line.remove())
+
+  return clone.textContent || ''
+}
+
+function getExplicitCategory(element) {
+  if (!element) return ''
+
+  const value = element.getAttribute('data-category')
+
+  if (value) return value
+
+  const child = element.querySelector?.(SELECTORS.category)
+
+  return child?.getAttribute('data-category') || ''
+}
+
+function getCategoryValue(element) {
+  return normalizeCategory(getExplicitCategory(element) || getCategoryText(element))
+}
+
+function getCategoryControl(element) {
+  return element.closest(SELECTORS.categoryItem) || element
+}
+
+function getCategoryLines(trigger, control) {
+  const lines = [
+    ...gsap.utils.toArray(SELECTORS.categoryLine, control),
+    ...gsap.utils.toArray(SELECTORS.categoryLine, trigger),
+    ...gsap.utils.toArray(SELECTORS.categoryLine, trigger.parentElement || trigger),
+  ]
+
+  return [...new Set(lines)]
 }
 
 export function initProjectList(root = document) {
   const links = gsap.utils.toArray(SELECTORS.link, root)
-  const videoItems = gsap.utils.toArray(SELECTORS.videoItem, root)
 
-  if (!links.length || !videoItems.length) return () => {}
+  if (!links.length) return () => {}
 
-  const linksParent = links[0].parentElement
-  const videoChildren = videoItems.map((item) => item.querySelector(SELECTORS.videoChild) || item)
-  const videos = videoItems.map((item) => item.querySelector(SELECTORS.video))
-  const linkCategories = links.map((link) => normalizeCategory(link.querySelector(SELECTORS.category)?.textContent || ''))
+  const list = root.querySelector(SELECTORS.list) || links[0].closest(SELECTORS.list)
+  const items = links.map((link) => link.closest(SELECTORS.item) || link)
+  const frames = items.map((item) => item.querySelector(SELECTORS.frame))
+  const flipTargets = [...items, ...frames.filter(Boolean)]
+  const cTextGroups = items.map((item) => gsap.utils.toArray(SELECTORS.cText, item))
+  const linkCategories = links.map((link, index) => (
+    getCategoryValue(link)
+    || getCategoryValue(items[index])
+  ))
   const categoryTriggers = gsap.utils.toArray(SELECTORS.category, root)
-    .filter((trigger) => !links.some((link) => link.contains(trigger)))
+    .filter((trigger) => !links.some((link) => link === trigger || link.contains(trigger) || trigger.contains(link)))
+    .filter((trigger) => !items.some((item) => item === trigger || item.contains(trigger) || trigger.contains(item)))
   const allCategoryTriggers = gsap.utils.toArray(SELECTORS.allCategory, root)
-  const hoverBoxes = links.map((link) => gsap.utils.toArray(SELECTORS.linkHoverBox, link))
-  const allHoverBoxes = hoverBoxes.flat()
-  const setVideoItemOpacity = videoItems.map((item) => gsap.quickSetter(item, 'opacity'))
+  const createCategoryEntry = (trigger, value) => {
+    const control = getCategoryControl(trigger)
+
+    return {
+      trigger,
+      control,
+      lines: getCategoryLines(trigger, control),
+      value,
+    }
+  }
+
+  const categoryEntries = categoryTriggers.map((trigger) => (
+    createCategoryEntry(trigger, getCategoryValue(trigger))
+  ))
+  const allCategoryEntries = allCategoryTriggers.map((trigger) => (
+    createCategoryEntry(trigger, 'all')
+  ))
+  const categoryEntriesAll = [...allCategoryEntries, ...categoryEntries]
+  const categoryButtons = categoryEntriesAll.map(({ control }) => control)
+  const categoryLines = [...new Set(categoryEntriesAll.flatMap(({ lines }) => lines))]
   const padLength = getPadLength(links)
-  const removeMetadataListeners = []
-  const revealTweens = new Set()
-  const childTweens = new WeakMap()
-  let activeIndex = -1
-  let activeTransition = 0
+
   let activeCategory = 'all'
-  let hoverCloseTimeout = null
-  let zIndex = videoItems.length
+  let activeFlip = null
+
+  const applyCategoryLayout = (category) => {
+    const isAll = category === 'all'
+    let activeIndex = 0
+
+    list?.classList.toggle('is-filtered', !isAll)
+
+    links.forEach((link, index) => {
+      const isActive = isAll || linkCategories[index] === category
+      const item = items[index]
+      const frame = frames[index]
+
+      item.classList.toggle('is-active', isActive && !isAll)
+      item.classList.toggle('is-inactive', !isActive && !isAll)
+
+      if (isAll) {
+        item.style.removeProperty('grid-column')
+        item.style.removeProperty('grid-row')
+        item.style.removeProperty('z-index')
+        frame?.style.removeProperty('width')
+        frame?.style.removeProperty('height')
+        return
+      }
+
+      if (isActive) {
+        const row = Math.floor(activeIndex / 2) + 1
+        const columnStart = activeIndex % 2 === 0 ? 1 : 4
+
+        activeIndex += 1
+
+        item.style.gridColumn = `${columnStart} / span 3`
+        item.style.gridRow = String(row)
+        item.style.zIndex = '2'
+        if (frame) {
+          frame.style.width = FILTERED_FRAME_SIZES.active.width
+          frame.style.height = FILTERED_FRAME_SIZES.active.height
+        }
+        return
+      }
+
+      item.style.gridColumn = '14 / 16'
+      item.style.gridRow = '1'
+      item.style.zIndex = '1'
+      if (frame) {
+        frame.style.width = FILTERED_FRAME_SIZES.inactive.width
+        frame.style.height = FILTERED_FRAME_SIZES.inactive.height
+      }
+    })
+  }
+
+  const getCategoryTexts = (category) => {
+    const isAll = category === 'all'
+    const activeTexts = []
+    const inactiveTexts = []
+
+    cTextGroups.forEach((texts, index) => {
+      if (isAll || linkCategories[index] === category) {
+        activeTexts.push(...texts)
+      } else {
+        inactiveTexts.push(...texts)
+      }
+    })
+
+    return {
+      activeTexts,
+      inactiveTexts,
+    }
+  }
+
+  const animateCategoryText = (category, immediate = false) => {
+    const { activeTexts, inactiveTexts } = getCategoryTexts(category)
+
+    gsap.to(activeTexts, {
+      y: '0%',
+      opacity: 1,
+      duration: immediate ? 0 : 0.45,
+      ease: 'power3.out',
+      stagger: immediate ? 0 : 0.015,
+      overwrite: true,
+    })
+
+    gsap.to(inactiveTexts, {
+      y: '100%',
+      opacity: 0,
+      duration: immediate ? 0 : 0.5,
+      ease: 'power3.inOut',
+      stagger: immediate ? 0 : 0.025,
+      overwrite: true,
+    })
+  }
 
   const setProjectNumbers = () => {
     links.forEach((link, index) => {
@@ -75,224 +228,167 @@ export function initProjectList(root = document) {
     })
   }
 
-  const setVideoTime = (index) => {
-    const video = videos[index]
-    const timeEl = links[index]?.querySelector(SELECTORS.videoTime)
+  const setCategoryLine = (lines, isActive, immediate = false) => {
+    if (!lines.length) return
 
-    if (!video || !timeEl) return
-
-    timeEl.textContent = formatTime(video.duration)
-  }
-
-  const setVideoTimes = () => {
-    videos.forEach((video, index) => {
-      if (!video) return
-
-      video.preload = 'metadata'
-
-      if (video.readyState >= 1) {
-        setVideoTime(index)
-        return
-      }
-
-      const updateTime = () => setVideoTime(index)
-
-      video.addEventListener('loadedmetadata', updateTime, { once: true })
-      removeMetadataListeners.push(() => video.removeEventListener('loadedmetadata', updateTime))
-      video.load()
+    gsap.to(lines, {
+      scaleX: isActive ? 1 : 0,
+      duration: immediate ? 0 : 0.45,
+      ease: 'power3.out',
+      overwrite: true,
     })
   }
 
-  const showVideo = (nextIndex, immediate = false) => {
-    const index = gsap.utils.wrap(0, videoItems.length, nextIndex)
+  const setCategoryState = (category, immediate = false) => {
+    const nextCategory = category || 'all'
 
-    if (index === activeIndex) return
+    if (!immediate && nextCategory === activeCategory) return
 
-    activeTransition += 1
-    zIndex += 1
+    activeFlip?.kill()
+    const state = !immediate ? Flip.getState(flipTargets) : null
+    const { activeTexts, inactiveTexts } = getCategoryTexts(nextCategory)
 
-    const transition = activeTransition
-    const currentChildTween = childTweens.get(videoChildren[index])
-
-    currentChildTween?.kill()
-
-    videoItems[index].style.zIndex = String(zIndex)
-    setVideoItemOpacity[index](1)
-
-    const completeReveal = () => {
-      if (transition !== activeTransition) return
-
-      videoItems.forEach((item, itemIndex) => {
-        if (itemIndex === index) {
-          item.style.zIndex = String(videoItems.length)
-          setVideoItemOpacity[itemIndex](1)
-          return
-        }
-
-        item.style.zIndex = '0'
-        setVideoItemOpacity[itemIndex](0)
-      })
-
-      zIndex = videoItems.length
-    }
-
-    gsap.set(videoChildren[index], {
-      clipPath: immediate ? 'inset(0 0 0 0%)' : 'inset(0 0 0 100%)',
+    activeCategory = nextCategory
+    gsap.to(inactiveTexts, {
+      y: '100%',
+      opacity: 0,
+      duration: immediate ? 0 : 0.32,
+      ease: 'power3.inOut',
+      stagger: immediate ? 0 : 0.02,
+      overwrite: true,
     })
+
+    applyCategoryLayout(activeCategory)
 
     if (immediate) {
-      completeReveal()
-      activeIndex = index
-      return
+      animateCategoryText(activeCategory, true)
     }
 
-    const revealTween = gsap.to(videoChildren[index], {
-      clipPath: 'inset(0 0 0 0%)',
-      duration: 0.8,
-      ease: 'power3.inOut',
-      onComplete: () => {
-        revealTweens.delete(revealTween)
-        childTweens.delete(videoChildren[index])
-        completeReveal()
-      },
-    })
-
-    revealTweens.add(revealTween)
-    childTweens.set(videoChildren[index], revealTween)
-    activeIndex = index
-  }
-
-  const onLinkEnter = (index) => {
-    window.clearTimeout(hoverCloseTimeout)
-    showVideo(index)
-    showHoverBox(index)
-  }
-
-  const showHoverBox = (activeHoverIndex) => {
-    hoverBoxes.forEach((boxes, index) => {
-      if (!boxes.length) return
-
-      gsap.to(boxes, {
-        width: index === activeHoverIndex ? '100%' : '0%',
-        height: '100%',
-        duration: 0.45,
+    if (state) {
+      activeFlip = Flip.from(state, {
+        duration: 0.9,
+        ease: 'power3.inOut',
+        nested: true,
+        stagger: {
+          each: 0.025,
+          from: activeCategory === 'all' ? 'end' : 'start',
+        },
+        overwrite: true,
+        onComplete: () => {
+          gsap.to(activeTexts, {
+            y: '0%',
+            opacity: 1,
+            duration: 0.42,
+            ease: 'power3.out',
+            stagger: 0.015,
+            overwrite: true,
+          })
+          activeFlip = null
+        },
+      })
+    } else if (!immediate) {
+      gsap.to(activeTexts, {
+        y: '0%',
+        opacity: 1,
+        duration: 0.42,
         ease: 'power3.out',
+        stagger: 0.015,
         overwrite: true,
       })
-    })
-  }
+    }
 
-  const setCategoryState = (category) => {
-    activeCategory = category || 'all'
+    categoryEntries.forEach(({ control, lines, value }) => {
+      const isActive = value === activeCategory
 
-    links.forEach((link, index) => {
-      const isVisible = activeCategory === 'all' || linkCategories[index] === activeCategory
-
-      gsap.to(link, {
-        opacity: isVisible ? 1 : 0.5,
-        duration: 0.35,
-        ease: 'power2.out',
-        overwrite: true,
-      })
+      control.classList.toggle('is-active', isActive)
+      control.setAttribute('aria-pressed', String(isActive))
+      setCategoryLine(lines, isActive, immediate)
     })
 
-    categoryTriggers.forEach((trigger) => {
-      const isActive = normalizeCategory(trigger.textContent || '') === activeCategory
-
-      trigger.classList.toggle('is-active', isActive)
-      trigger.setAttribute('aria-pressed', String(isActive))
-    })
-
-    allCategoryTriggers.forEach((trigger) => {
+    allCategoryEntries.forEach(({ control, lines }) => {
       const isActive = activeCategory === 'all'
 
-      trigger.classList.toggle('is-active', isActive)
-      trigger.setAttribute('aria-pressed', String(isActive))
+      control.classList.toggle('is-active', isActive)
+      control.setAttribute('aria-pressed', String(isActive))
+      setCategoryLine(lines, isActive, immediate)
     })
   }
 
-  const removeListeners = links.map((link, index) => {
-    const enter = () => onLinkEnter(index)
-    const leave = () => scheduleHoverClose()
-
-    link.addEventListener('pointerenter', enter)
-    link.addEventListener('pointerleave', leave)
-    link.addEventListener('focus', enter)
-    link.addEventListener('blur', leave)
-
-    return () => {
-      link.removeEventListener('pointerenter', enter)
-      link.removeEventListener('pointerleave', leave)
-      link.removeEventListener('focus', enter)
-      link.removeEventListener('blur', leave)
-    }
-  })
-
   const removeCategoryListeners = [
-    ...categoryTriggers.map((trigger) => {
-      const click = () => setCategoryState(normalizeCategory(trigger.textContent || ''))
+    ...categoryEntries.map(({ control, lines, value }) => {
+      const click = (event) => {
+        event.preventDefault()
+        setCategoryState(value)
+      }
+      const enter = () => setCategoryLine(lines, true)
+      const leave = () => setCategoryLine(lines, value === activeCategory)
 
-      trigger.addEventListener('click', click)
+      control.addEventListener('click', click)
+      control.addEventListener('pointerenter', enter)
+      control.addEventListener('pointerleave', leave)
+      control.addEventListener('focus', enter)
+      control.addEventListener('blur', leave)
 
-      return () => trigger.removeEventListener('click', click)
+      return () => {
+        control.removeEventListener('click', click)
+        control.removeEventListener('pointerenter', enter)
+        control.removeEventListener('pointerleave', leave)
+        control.removeEventListener('focus', enter)
+        control.removeEventListener('blur', leave)
+      }
     }),
-    ...allCategoryTriggers.map((trigger) => {
-      const click = () => setCategoryState('all')
+    ...allCategoryEntries.map(({ control, lines }) => {
+      const click = (event) => {
+        event.preventDefault()
+        setCategoryState('all')
+      }
+      const enter = () => setCategoryLine(lines, true)
+      const leave = () => setCategoryLine(lines, activeCategory === 'all')
 
-      trigger.addEventListener('click', click)
+      control.addEventListener('click', click)
+      control.addEventListener('pointerenter', enter)
+      control.addEventListener('pointerleave', leave)
+      control.addEventListener('focus', enter)
+      control.addEventListener('blur', leave)
 
-      return () => trigger.removeEventListener('click', click)
+      return () => {
+        control.removeEventListener('click', click)
+        control.removeEventListener('pointerenter', enter)
+        control.removeEventListener('pointerleave', leave)
+        control.removeEventListener('focus', enter)
+        control.removeEventListener('blur', leave)
+      }
     }),
   ]
 
-  const closeHoverState = () => {
-    showVideo(0)
-    showHoverBox(-1)
-  }
-
-  const hasActiveLink = () => links.some((link) => link.matches(':hover') || link.matches(':focus-within'))
-
-  const scheduleHoverClose = () => {
-    window.clearTimeout(hoverCloseTimeout)
-
-    hoverCloseTimeout = window.setTimeout(() => {
-      if (!hasActiveLink()) {
-        closeHoverState()
-      }
-    }, 40)
-  }
-
-  linksParent?.addEventListener('pointerleave', closeHoverState)
-
-  gsap.set(videoChildren, {
-    willChange: 'clip-path',
-  })
-
-  gsap.set(videoItems, {
-    pointerEvents: 'none',
-  })
-
-  gsap.set(allHoverBoxes, {
-    width: '0%',
-    height: '100%',
+  gsap.set(categoryLines, {
+    scaleX: 0,
+    transformOrigin: 'left center',
   })
 
   setProjectNumbers()
-  setVideoTimes()
-  setCategoryState('all')
-  showVideo(0, true)
+  setCategoryState('all', true)
 
   return () => {
-    revealTweens.forEach((tween) => tween.kill())
-    revealTweens.clear()
-    window.clearTimeout(hoverCloseTimeout)
-    removeListeners.forEach((remove) => remove())
+    activeFlip?.kill()
     removeCategoryListeners.forEach((remove) => remove())
-    linksParent?.removeEventListener('pointerleave', closeHoverState)
-    removeMetadataListeners.forEach((remove) => remove())
-    gsap.set(links, { clearProps: 'opacity' })
-    gsap.set(allHoverBoxes, { clearProps: 'width,height' })
-    gsap.set(videoItems, { clearProps: 'opacity,zIndex,pointerEvents' })
-    gsap.set(videoChildren, { clearProps: 'clipPath,willChange' })
+    categoryButtons.forEach((button) => {
+      button.classList.remove('is-active')
+      button.removeAttribute('aria-pressed')
+    })
+    list?.classList.remove('is-filtered')
+    items.forEach((item, index) => {
+      item.classList.remove('is-active', 'is-inactive')
+      item.style.removeProperty('grid-column')
+      item.style.removeProperty('grid-row')
+      item.style.removeProperty('z-index')
+      frames[index]?.style.removeProperty('width')
+      frames[index]?.style.removeProperty('height')
+    })
+    gsap.set(links, { clearProps: 'opacity,transform' })
+    gsap.set(cTextGroups.flat(), { clearProps: 'opacity,transform' })
+    gsap.set(categoryLines, {
+      clearProps: 'transform,transformOrigin',
+    })
   }
 }

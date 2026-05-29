@@ -3,6 +3,7 @@ import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
 import { initGlobalLink } from '../components/globalLink.js'
+import imagesAnimation from '../components/imagesAnimation.js'
 import { initLines } from '../components/lines.js'
 import { afterInitialLoad, initLoadAnimation } from '../components/load.js'
 import { initNavbar } from '../components/navbar.js'
@@ -25,6 +26,7 @@ export default class globalRender extends Renderer {
   destroyGlobalLink = () => {}
   destroyTitleText = () => {}
   destroyBodyText = () => {}
+  destroyImagesAnimation = () => {}
   destroyNavbar = () => {}
   destroyReel = () => {}
   destroyCta = () => {}
@@ -48,6 +50,7 @@ export default class globalRender extends Renderer {
 
       this.destroyTitleText = titleTextReveal(this.content)
       this.destroyBodyText = bodyTextReveal(this.content)
+      this.destroyImagesAnimation = imagesAnimation(this.content)
       initTeamCarrousel()
       this.destroyAlwaysSlider = initAlwaysSlider(this.content)
       this.destroyShowcaseSection = initShowcaseSection(this.content)
@@ -96,6 +99,8 @@ export default class globalRender extends Renderer {
     this.destroyTitleText = () => {}
     this.destroyBodyText()
     this.destroyBodyText = () => {}
+    this.destroyImagesAnimation()
+    this.destroyImagesAnimation = () => {}
     this.destroyNavbar()
     this.destroyNavbar = () => {}
     this.destroyReel()

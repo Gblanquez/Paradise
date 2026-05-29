@@ -3,12 +3,14 @@ import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
 import { initGlobalLink } from '../components/globalLink.js'
+import imagesAnimation from '../components/imagesAnimation.js'
 import { initLines } from '../components/lines.js'
 import { afterInitialLoad, initLoadAnimation } from '../components/load.js'
 import { initNavbar } from '../components/navbar.js'
 import { initReel } from '../components/reel.js'
 import { initScaling } from '../components/scaling.js'
 import { lenis, startRAF } from '../components/scroll.js'
+import { initProjectList } from '../components/project.js'
 import { initShowcaseSection } from '../components/showcaseSection.js'
 import { initTalent } from '../components/talent.js'
 import { initWorkCarrousel } from '../components/workCarrousel.js'
@@ -25,11 +27,13 @@ export default class projectRender extends Renderer {
   destroyGlobalLink = () => {}
   destroyTitleText = () => {}
   destroyBodyText = () => {}
+  destroyImagesAnimation = () => {}
   destroyNavbar = () => {}
   destroyReel = () => {}
   destroyCta = () => {}
   destroyLines = () => {}
   destroyLoadAnimation = () => {}
+  destroyProjectList = () => {}
   isLeaving = false
 
   onEnter() {
@@ -41,6 +45,7 @@ export default class projectRender extends Renderer {
     this.destroyNavbar = initNavbar(document)
     this.destroyReel = initReel(document).destroy
     this.destroyCta = initCta(this.content)
+    this.destroyProjectList = initProjectList(this.content)
     this.destroyLoadAnimation = initLoadAnimation(this.content)
 
     afterInitialLoad(() => {
@@ -48,6 +53,7 @@ export default class projectRender extends Renderer {
 
       this.destroyTitleText = titleTextReveal(this.content)
       this.destroyBodyText = bodyTextReveal(this.content)
+      this.destroyImagesAnimation = imagesAnimation(this.content)
       initTeamCarrousel()
       this.destroyAlwaysSlider = initAlwaysSlider(this.content)
       this.destroyShowcaseSection = initShowcaseSection(this.content)
@@ -96,12 +102,16 @@ export default class projectRender extends Renderer {
     this.destroyTitleText = () => {}
     this.destroyBodyText()
     this.destroyBodyText = () => {}
+    this.destroyImagesAnimation()
+    this.destroyImagesAnimation = () => {}
     this.destroyNavbar()
     this.destroyNavbar = () => {}
     this.destroyReel()
     this.destroyReel = () => {}
     this.destroyCta()
     this.destroyCta = () => {}
+    this.destroyProjectList()
+    this.destroyProjectList = () => {}
     this.destroyLines()
     this.destroyLines = () => {}
     this.destroyLoadAnimation()
