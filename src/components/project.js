@@ -18,8 +18,8 @@ const SELECTORS = {
 
 const FILTERED_FRAME_SIZES = {
   active: {
-    width: '32vw',
-    height: '18vw',
+    width: '40vw',
+    height: '22vw',
   },
   inactive: {
     width: '12vw',
@@ -153,11 +153,11 @@ export function initProjectList(root = document) {
 
       if (isActive) {
         const row = Math.floor(activeIndex / 2) + 1
-        const columnStart = activeIndex % 2 === 0 ? 1 : 4
+        const columnStart = activeIndex % 2 === 0 ? 1 : 6
 
         activeIndex += 1
 
-        item.style.gridColumn = `${columnStart} / span 3`
+        item.style.gridColumn = `${columnStart} / span 5`
         item.style.gridRow = String(row)
         item.style.zIndex = '2'
         if (frame) {

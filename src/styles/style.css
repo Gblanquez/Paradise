@@ -31,7 +31,7 @@ body {
   }
   
   .wk-collection-list.is-filtered .wk-collection-item.is-active {
-    grid-column: span 3;
+    grid-column: span 5;
   }
 
   .wk-collection-list.is-filtered .wk-collection-item.is-inactive {
