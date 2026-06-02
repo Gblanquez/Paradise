@@ -70,6 +70,10 @@ function getCategoryLines(trigger, control) {
   return [...new Set(lines)]
 }
 
+function notifyProjectsLayoutReady() {
+  window.dispatchEvent(new CustomEvent('projects:layout-ready'))
+}
+
 export function initProjectList(root = document) {
   const links = gsap.utils.toArray(SELECTORS.link, root)
 
@@ -228,7 +232,6 @@ export function initProjectList(root = document) {
     if (!immediate && nextCategory === activeCategory) return
 
     activeFlip?.kill()
-    list?.style.removeProperty('min-height')
     const currentListHeight = list?.getBoundingClientRect().height || 0
     const state = !immediate ? Flip.getState(flipTargets) : null
     const { activeTexts, inactiveTexts } = getCategoryTexts(nextCategory)
@@ -267,6 +270,7 @@ export function initProjectList(root = document) {
         overwrite: true,
         onComplete: () => {
           list?.style.removeProperty('min-height')
+          notifyProjectsLayoutReady()
           gsap.to(activeTexts, {
             y: '0%',
             opacity: 1,
@@ -284,10 +288,11 @@ export function initProjectList(root = document) {
         opacity: 1,
         duration: 0.42,
         ease: 'power3.out',
-        stagger: 0.015,
-        overwrite: true,
-      })
-    }
+          stagger: 0.015,
+          overwrite: true,
+          onComplete: notifyProjectsLayoutReady,
+        })
+      }
 
     categoryEntries.forEach(({ control, lines, value }) => {
       const isActive = value === activeCategory
@@ -369,6 +374,7 @@ export function initProjectList(root = document) {
     })
     list?.classList.remove('is-filtered')
     list?.style.removeProperty('grid-template-columns')
+    list?.style.removeProperty('min-height')
     items.forEach((item, index) => {
       item.classList.remove('is-active', 'is-inactive')
       item.style.removeProperty('grid-column')

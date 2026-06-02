@@ -57,14 +57,24 @@ export default class globalRender extends Renderer {
     this.destroyLinkHover = initLinkHover(this.content)
     this.destroyLoadAnimation = initLoadAnimation(this.content)
 
+    const textRevealTargets = gsap.utils.toArray('[data-a="title-text"], [data-a="body-text"]', this.content)
+    const heroVideoMasks = gsap.utils.toArray('[data-a="video-mask"]', this.content)
+
+    if (textRevealTargets.length) {
+      gsap.set(textRevealTargets, { autoAlpha: 0 })
+    }
+
+    if (heroVideoMasks.length) {
+      gsap.set(heroVideoMasks, {
+        scale: 1.2,
+        rotation: -20,
+        clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+        transformOrigin: 'center center',
+      })
+    }
+
     afterInitialLoad(() => {
       if (this.isLeaving) return
-
-      const textRevealTargets = gsap.utils.toArray('[data-a="title-text"], [data-a="body-text"]', this.content)
-
-      if (textRevealTargets.length) {
-        gsap.set(textRevealTargets, { autoAlpha: 0 })
-      }
 
       let hasInitializedTextReveals = false
       const initTextReveals = () => {
@@ -94,6 +104,8 @@ export default class globalRender extends Renderer {
   }
 
   onEnterCompleted() {
+    window.dispatchEvent(new CustomEvent('page:entered'))
+
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
 
     if (!pendingHash) return

@@ -82,6 +82,8 @@ export default class workRender extends Renderer {
   }
 
   onEnterCompleted() {
+    window.dispatchEvent(new CustomEvent('page:entered'))
+
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
 
     if (!pendingHash) return

@@ -256,13 +256,12 @@ export function initLoadAnimation(root = document) {
           })
 
           activeTween = gsap.timeline({
-            onComplete: () => {
-              gsap.set(content || [], { display: 'none' })
-              gsap.set(pageMain || [], { opacity: 1 })
-              completeLoad()
-
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
+	            onComplete: () => {
+	              gsap.set(content || [], { display: 'none' })
+	              gsap.set(pageMain || [], { opacity: 1 })
+	
+	              requestAnimationFrame(() => {
+	                requestAnimationFrame(() => {
                   if (isDestroyed) return
 
                   gsap.to(parent, {
@@ -278,17 +277,18 @@ export function initLoadAnimation(root = document) {
                         opacity: 0,
                         pointerEvents: 'none',
                         visibility: 'hidden',
-                      })
-                      gsap.set(parent, { clearProps: 'backgroundColor' })
-                      gsap.set(boxes, {
-                        yPercent: 110,
-                        rotation: 45,
-                        clearProps: 'transformOrigin',
-                      })
-                      cleanup()
-                    },
-                  })
-                })
+	                      })
+	                      gsap.set(parent, { clearProps: 'backgroundColor' })
+	                      gsap.set(boxes, {
+	                        yPercent: 110,
+	                        rotation: 45,
+	                        clearProps: 'transformOrigin',
+	                      })
+	                      cleanup()
+	                      completeLoad()
+	                    },
+	                  })
+	                })
               })
             },
           })

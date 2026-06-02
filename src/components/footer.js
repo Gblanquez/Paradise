@@ -1,6 +1,6 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { addScrollListener } from './scroll.js'
+import { addScrollListener, lenis } from './scroll.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -40,13 +40,39 @@ export function initFooter(root = document) {
       y: '0%',
       ease: 'none',
     }
-  )
+	  )
+	
+  let refreshFrame = null
+  let refreshTimer = null
+  const refreshFooter = () => {
+    if (refreshFrame) window.cancelAnimationFrame(refreshFrame)
+    if (refreshTimer) window.clearTimeout(refreshTimer)
+
+    refreshFrame = window.requestAnimationFrame(() => {
+      refreshFrame = window.requestAnimationFrame(() => {
+        lenis.resize()
+        ScrollTrigger.refresh()
+        refreshTimer = window.setTimeout(() => {
+          lenis.resize()
+          ScrollTrigger.refresh()
+        }, 120)
+      })
+    })
+  }
 
   const removeScrollListener = addScrollListener(() => ScrollTrigger.update())
-  window.requestAnimationFrame(() => ScrollTrigger.refresh())
+  window.addEventListener('page:entered', refreshFooter)
+  window.addEventListener('projects:layout-ready', refreshFooter)
+  window.addEventListener('load', refreshFooter)
+  refreshFooter()
 
   return () => {
     removeScrollListener()
+    window.removeEventListener('page:entered', refreshFooter)
+    window.removeEventListener('projects:layout-ready', refreshFooter)
+    window.removeEventListener('load', refreshFooter)
+    if (refreshFrame) window.cancelAnimationFrame(refreshFrame)
+    if (refreshTimer) window.clearTimeout(refreshTimer)
     pinTrigger.kill()
     scrubTimeline.scrollTrigger?.kill()
     scrubTimeline.kill()
