@@ -24,7 +24,6 @@ body {
 
   }
 
-
   .wk-collection-list.is-filtered {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
@@ -40,6 +39,7 @@ body {
   }
 
 .lk-hover-box,
+.hover-g,
 .transition-box-two,
 .global-box-two,
 .nav-box-two,

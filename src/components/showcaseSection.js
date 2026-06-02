@@ -5,7 +5,7 @@ import { addScrollListener } from './scroll.js'
 gsap.registerPlugin(ScrollTrigger)
 
 const SELECTORS = {
-  spacer: '.spacer-showcase',
+  spacer: '.spacer-wrapper',
   imageFrame: '.spacer-img-container',
   imageContainer: '.space-image-container',
   image: '[data-a="space-img"]',

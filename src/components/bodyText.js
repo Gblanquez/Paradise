@@ -51,6 +51,7 @@ export default function bodyTextReveal(root = document) {
             yPercent: 100,
             willChange: 'transform',
           })
+          gsap.set(el, { autoAlpha: 1 })
 
           const tl = gsap.timeline({
             paused: true,

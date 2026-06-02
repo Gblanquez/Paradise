@@ -11,20 +11,20 @@ export default function imagesAnimation(root = document) {
   if (!imgTrigger.length) return () => {}
 
   imgTrigger.forEach((trigger) => {
-    const imgWrapper = trigger.querySelector('[data-a="mask"]')
+    const imgWrapper = trigger.querySelector('[data-a="mask-project"]')
     const imgItem = trigger.querySelector('[data-a="scale"]')
 
     if (!imgWrapper || !imgItem) return
 
     gsap.set(imgWrapper, {
       overflow: 'hidden',
-      clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)',
-      transformOrigin: '50% 0%',
+      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+      transformOrigin: '50% 50%',
       willChange: 'clip-path, transform',
     })
 
     gsap.set(imgItem, {
-      scale: 1.5,
+      scale: 1.2,
       y: '0%',
       willChange: 'transform',
       transformOrigin: '50% 50%',
@@ -41,8 +41,8 @@ export default function imagesAnimation(root = document) {
 
     tl.to(imgWrapper, {
       clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-      duration: 1.8,
-      ease: 'power3.out',
+      duration: 2.4,
+      ease: 'power4.out',
     }, 0)
     .to(imgItem, {
       scale: 1,
@@ -76,6 +76,10 @@ export default function imagesAnimation(root = document) {
     timelines.push(scrubTl)
     triggers.push(tl.scrollTrigger)
     triggers.push(scrubTl.scrollTrigger)
+  })
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => ScrollTrigger.refresh())
   })
 
   return () => {

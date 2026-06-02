@@ -1,13 +1,17 @@
 import { Renderer } from '@unseenco/taxi'
 import { initAlwaysSlider } from '../components/alwaysSlider.js'
+import { initAboutSection } from '../components/aboutSection.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
+import { initFooter } from '../components/footer.js'
 import { initGlobalLink } from '../components/globalLink.js'
 import imagesAnimation from '../components/imagesAnimation.js'
+import { initLinkHover } from '../components/linkHover.js'
 import { initInfoCarrousel } from '../components/infoCarrousel.js'
 import { initInfoVideo } from '../components/infoVideo.js'
 import { initLines } from '../components/lines.js'
 import { afterInitialLoad, initLoadAnimation } from '../components/load.js'
+import { initMask } from '../components/mask.js'
 import { initNavbar } from '../components/navbar.js'
 import { initReel } from '../components/reel.js'
 import { initScaling } from '../components/scaling.js'
@@ -22,14 +26,17 @@ import titleTextReveal from '../components/titleText.js'
 
 export default class workRender extends Renderer {
   destroyAlwaysSlider = () => {}
+  destroyAboutSection = () => {}
   destroyShowcaseSection = () => {}
   destroyTalent = () => {}
   destroyWhySection = () => {}
   destroyWorkCarrousel = () => {}
+  destroyFooter = () => {}
   destroyGlobalLink = () => {}
   destroyTitleText = () => {}
   destroyBodyText = () => {}
   destroyImagesAnimation = () => {}
+  destroyLinkHover = () => {}
   destroyNavbar = () => {}
   destroyReel = () => {}
   destroyCta = () => {}
@@ -38,6 +45,7 @@ export default class workRender extends Renderer {
   destroyInfoVideo = () => {}
   destroyVerticalVideos = () => {}
   destroyLoadAnimation = () => {}
+  destroyMask = () => {}
   isLeaving = false
 
   onEnter() {
@@ -50,6 +58,7 @@ export default class workRender extends Renderer {
     this.destroyNavbar = initNavbar(document)
     this.destroyReel = initReel(document).destroy
     this.destroyCta = initCta(this.content)
+    this.destroyLinkHover = initLinkHover(this.content)
     this.destroyInfoCarrousel = initInfoCarrousel(this.content)
 
     const infoVideo = initInfoVideo(this.content)
@@ -65,7 +74,10 @@ export default class workRender extends Renderer {
       this.destroyTitleText = titleTextReveal(this.content)
       this.destroyBodyText = bodyTextReveal(this.content)
       this.destroyImagesAnimation = imagesAnimation(this.content)
+      this.destroyAboutSection = initAboutSection(this.content)
+      this.destroyFooter = initFooter(this.content)
       this.destroyLines = initLines(this.content)
+      this.destroyMask = initMask(this.content)
     })
   }
 
@@ -90,6 +102,12 @@ export default class workRender extends Renderer {
 
   onLeave() {
     // basic Taxi renderer
+    
+  }
+
+  onLeaveCompleted() {
+    // run after the transition.onleave has fully completed
+
     this.isLeaving = true
 
     this.destroyGlobalLink()
@@ -100,6 +118,12 @@ export default class workRender extends Renderer {
     this.destroyBodyText = () => {}
     this.destroyImagesAnimation()
     this.destroyImagesAnimation = () => {}
+    this.destroyLinkHover()
+    this.destroyLinkHover = () => {}
+    this.destroyAboutSection()
+    this.destroyAboutSection = () => {}
+    this.destroyFooter()
+    this.destroyFooter = () => {}
     this.destroyNavbar()
     this.destroyNavbar = () => {}
     this.destroyReel()
@@ -108,6 +132,8 @@ export default class workRender extends Renderer {
     this.destroyCta = () => {}
     this.destroyLines()
     this.destroyLines = () => {}
+    this.destroyMask()
+    this.destroyMask = () => {}
     this.destroyInfoCarrousel()
     this.destroyInfoCarrousel = () => {}
     this.destroyInfoVideo()
@@ -116,9 +142,5 @@ export default class workRender extends Renderer {
     this.destroyVerticalVideos = () => {}
     this.destroyLoadAnimation()
     this.destroyLoadAnimation = () => {}
-  }
-
-  onLeaveCompleted() {
-    // run after the transition.onleave has fully completed
   }
 }

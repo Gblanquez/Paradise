@@ -1,167 +1,159 @@
 import gsap from 'gsap'
-import { lenis } from './scroll.js'
-import { initReel } from './reel.js'
-import { initTeamCarrousel } from './teamCarrousel.js'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { addScrollListener } from './scroll.js'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const SELECTORS = {
-  container: '.about-container',
-  openToggle: '[data-a="about-toggle"]',
-  closeToggle: '.close-about-toggle',
-  video: 'video',
+  section: '#about',
+  imageWrap: '[data-a="about-img-wrap"]',
+  logoWrapper: '.clients-logo-wrapper',
+  logoList: '.clients-logo-list',
+  logoItem: '.clients-logo-item',
+}
+
+function horizontalLoop(items, config = {}) {
+  const elements = gsap.utils.toArray(items)
+
+  if (elements.length < 2) return null
+
+  const timeline = gsap.timeline({
+    repeat: -1,
+    paused: config.paused,
+    defaults: { ease: 'none' },
+    onReverseComplete: () => {
+      timeline.totalTime(timeline.rawTime() + timeline.duration() * 100)
+    },
+  })
+  const length = elements.length
+  const startX = elements[0].offsetLeft
+  const pixelsPerSecond = (config.speed || 1) * 100
+  const widths = []
+  const xPercents = []
+  const snap = config.snap === false ? (value) => value : gsap.utils.snap(config.snap || 1)
+
+  gsap.set(elements, {
+    xPercent: (index, element) => {
+      widths[index] = parseFloat(gsap.getProperty(element, 'width', 'px'))
+      xPercents[index] = snap(
+        (parseFloat(gsap.getProperty(element, 'x', 'px')) / widths[index]) * 100
+        + gsap.getProperty(element, 'xPercent')
+      )
+
+      return xPercents[index]
+    },
+  })
+  gsap.set(elements, { x: 0 })
+
+  const lastItem = elements[length - 1]
+  const totalWidth = lastItem.offsetLeft
+    + (xPercents[length - 1] / 100) * widths[length - 1]
+    - startX
+    + lastItem.offsetWidth * gsap.getProperty(lastItem, 'scaleX')
+    + (parseFloat(config.paddingRight) || 0)
+
+  elements.forEach((item, index) => {
+    const currentX = (xPercents[index] / 100) * widths[index]
+    const distanceToStart = item.offsetLeft + currentX - startX
+    const distanceToLoop = distanceToStart + widths[index] * gsap.getProperty(item, 'scaleX')
+
+    timeline
+      .to(item, {
+        xPercent: snap(((currentX - distanceToLoop) / widths[index]) * 100),
+        duration: distanceToLoop / pixelsPerSecond,
+      }, 0)
+      .fromTo(item, {
+        xPercent: snap(((currentX - distanceToLoop + totalWidth) / widths[index]) * 100),
+      }, {
+        xPercent: xPercents[index],
+        duration: (currentX - distanceToLoop + totalWidth - currentX) / pixelsPerSecond,
+        immediateRender: false,
+      }, distanceToLoop / pixelsPerSecond)
+  })
+
+  return timeline
 }
 
 export function initAboutSection(root = document) {
-  const container = root.querySelector(SELECTORS.container)
-  const openToggles = gsap.utils.toArray(SELECTORS.openToggle, root)
-  const closeToggles = gsap.utils.toArray(SELECTORS.closeToggle, root)
-  const videos = gsap.utils.toArray(SELECTORS.video, root)
+  const section = root.querySelector(SELECTORS.section) || document.querySelector(SELECTORS.section)
+  const imageWraps = section ? gsap.utils.toArray(SELECTORS.imageWrap, section) : []
+  const imageItems = imageWraps.flatMap((wrap) => gsap.utils.toArray(wrap.children))
+  const logoWrapper = section?.querySelector(SELECTORS.logoWrapper)
+  const logoList = logoWrapper?.querySelector(SELECTORS.logoList)
+  const logoItems = logoList ? gsap.utils.toArray(SELECTORS.logoItem, logoList) : []
 
-  if (!container || !openToggles.length || !closeToggles.length) return () => {}
+  if (!section || (!imageWraps.length && !logoItems.length)) return () => {}
 
-  let activeTween = null
-  let isOpen = !container.classList.contains('hide')
-  let pausedVideos = []
-  let savedLenisScroll = lenis.scroll
-  let previousBodyOverflow = ''
-  let previousHtmlOverflow = ''
-  let isPageScrollLocked = false
-  let reel = null
-  let destroyTeamCarrousel = null
+  let imageTimeline = null
+  let logoTimeline = null
+  let resizeTimeout = null
 
-  const lockPageScroll = () => {
-    if (isPageScrollLocked) return
-
-    savedLenisScroll = lenis.scroll
-    previousBodyOverflow = document.body.style.overflow
-    previousHtmlOverflow = document.documentElement.style.overflow
-
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-    lenis.stop()
-    isPageScrollLocked = true
-  }
-
-  const unlockPageScroll = () => {
-    if (!isPageScrollLocked) return
-
-    lenis.scrollTo(savedLenisScroll, {
-      immediate: true,
-      force: true,
+  if (imageWraps.length) {
+    gsap.set(imageWraps, {
+      clipPath: 'polygon(15% 0%, 85% 0%, 85% 100%, 15% 100%)',
+      transformOrigin: 'center center',
+      willChange: 'clip-path',
     })
 
-    document.body.style.overflow = previousBodyOverflow
-    document.documentElement.style.overflow = previousHtmlOverflow
-    lenis.start()
-    isPageScrollLocked = false
-  }
-
-  const pauseVideos = () => {
-    pausedVideos = videos.filter((video) => !video.paused)
-    pausedVideos.forEach((video) => video.pause())
-  }
-
-  const resumeVideos = () => {
-    pausedVideos.forEach((video) => video.play().catch(() => {}))
-    pausedVideos = []
-  }
-
-  const openAbout = () => {
-    if (isOpen) return
-
-    activeTween?.kill()
-    isOpen = true
-    container.classList.remove('hide')
-    container.scrollTop = 0
-    lockPageScroll()
-    pauseVideos()
-
-    if (!reel) {
-      reel = initReel(container)
-    }
-
-    if (!destroyTeamCarrousel) {
-      destroyTeamCarrousel = initTeamCarrousel(container)
-    }
-
-    activeTween = gsap.fromTo(container,
-      { x: '100%' },
-      {
-        x: '0%',
-        duration: 0.8,
-        ease: 'power3.inOut',
-        overwrite: true,
-      }
-    )
-  }
-
-  const closeAbout = () => {
-    if (!isOpen && container.classList.contains('hide')) return
-
-    activeTween?.kill()
-    isOpen = false
-    reel?.pause()
-    destroyTeamCarrousel?.()
-    destroyTeamCarrousel = null
-
-    activeTween = gsap.to(container, {
-      x: '100%',
-      duration: 0.45,
-      ease: 'power3.in',
-      overwrite: true,
-      onComplete: () => {
-        container.classList.add('hide')
-        resumeVideos()
-        reel?.pause()
-        unlockPageScroll()
+    imageTimeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top bottom',
+        end: 'bottom 50%',
+        scrub: true,
+        invalidateOnRefresh: true,
       },
     })
+
+    imageTimeline.to(imageWraps, {
+      clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+      ease: 'none',
+    }, 0)
+
+    if (imageItems.length) {
+      imageTimeline.to(imageItems, {
+        y: '10%',
+        ease: 'none',
+      }, 0)
+    }
   }
 
-  const handleWheel = (event) => {
-    event.stopPropagation()
+  const createLogoLoop = () => {
+    logoTimeline?.kill()
 
-    if (!isOpen) return
+    if (!logoItems.length) return
 
-    event.preventDefault()
-    container.scrollTop += event.deltaY
+    gsap.set(logoItems, {
+      flexShrink: 0,
+      willChange: 'transform',
+    })
+
+    logoTimeline = horizontalLoop(logoItems, {
+      speed: 0.7,
+      paddingRight: 0,
+    })
   }
 
-  const stopScrollPropagation = (event) => {
-    event.stopPropagation()
+  const handleResize = () => {
+    window.clearTimeout(resizeTimeout)
+    resizeTimeout = window.setTimeout(createLogoLoop, 150)
   }
 
-  openToggles.forEach((toggle) => toggle.addEventListener('click', openAbout))
-  closeToggles.forEach((toggle) => toggle.addEventListener('click', closeAbout))
-  container.addEventListener('wheel', handleWheel, { passive: false })
-  container.addEventListener('touchmove', stopScrollPropagation, { passive: true })
+  createLogoLoop()
+  window.addEventListener('resize', handleResize)
 
-  gsap.set(container, {
-    position: 'fixed',
-    inset: 0,
-    height: '100dvh',
-    maxHeight: '100dvh',
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    overscrollBehavior: 'contain',
-    zIndex: 999,
-  })
-  container.style.setProperty('-webkit-overflow-scrolling', 'touch')
+  const removeScrollListener = addScrollListener(() => ScrollTrigger.update())
+  window.requestAnimationFrame(() => ScrollTrigger.refresh())
 
   return () => {
-    activeTween?.kill()
-    unlockPageScroll()
-    resumeVideos()
-    reel?.destroy()
-    reel = null
-    destroyTeamCarrousel?.()
-    destroyTeamCarrousel = null
-    openToggles.forEach((toggle) => toggle.removeEventListener('click', openAbout))
-    closeToggles.forEach((toggle) => toggle.removeEventListener('click', closeAbout))
-    container.removeEventListener('wheel', handleWheel)
-    container.removeEventListener('touchmove', stopScrollPropagation)
-    container.style.removeProperty('-webkit-overflow-scrolling')
-    gsap.set(container, {
-      clearProps: 'transform,position,inset,height,maxHeight,overflowY,overflowX,overscrollBehavior,zIndex',
-    })
+    window.clearTimeout(resizeTimeout)
+    window.removeEventListener('resize', handleResize)
+    removeScrollListener()
+    imageTimeline?.scrollTrigger?.kill()
+    imageTimeline?.kill()
+    logoTimeline?.kill()
+    gsap.set(imageWraps, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
+    gsap.set(imageItems, { clearProps: 'transform' })
+    gsap.set(logoItems, { clearProps: 'x,xPercent,flexShrink,willChange' })
   }
 }
