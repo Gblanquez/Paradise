@@ -24,20 +24,6 @@ body {
 
   }
 
-  .wk-collection-list.is-filtered {
-    display: grid;
-    grid-template-columns: repeat(16, 1fr);
-  }
-  
-  .wk-collection-list.is-filtered .wk-collection-item.is-active {
-    grid-column: span 5;
-  }
-
-  .wk-collection-list.is-filtered .wk-collection-item.is-inactive {
-    grid-column: 14 / 16;
-    grid-row: 1;
-  }
-
 .lk-hover-box,
 .hover-g,
 .transition-box-two,

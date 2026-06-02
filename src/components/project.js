@@ -9,7 +9,6 @@ const SELECTORS = {
   link: '.wk-link',
   frame: '.ft-project-parent',
   cText: '[data-a="c-text"]',
-  projectNumber: '[data-a="project-number"]',
   category: '[data-category]',
   allCategory: '[data="all-category"]',
   categoryItem: '.category-list-item',
@@ -25,20 +24,6 @@ const FILTERED_FRAME_SIZES = {
     width: '12vw',
     height: '6vw',
   },
-}
-
-function formatIndex(index, padLength) {
-  return String(index + 1).padStart(padLength, '0')
-}
-
-function getPadLength(links) {
-  const existingLength = links.reduce((longest, link) => {
-    const numberEl = link.querySelector(SELECTORS.projectNumber)
-
-    return Math.max(longest, numberEl?.textContent.trim().length || 0)
-  }, 0)
-
-  return Math.max(String(links.length).length, existingLength)
 }
 
 function normalizeCategory(text) {
@@ -123,7 +108,6 @@ export function initProjectList(root = document) {
   const categoryEntriesAll = [...allCategoryEntries, ...categoryEntries]
   const categoryButtons = categoryEntriesAll.map(({ control }) => control)
   const categoryLines = [...new Set(categoryEntriesAll.flatMap(({ lines }) => lines))]
-  const padLength = getPadLength(links)
 
   let activeCategory = 'all'
   let activeFlip = null
@@ -132,17 +116,22 @@ export function initProjectList(root = document) {
     const isAll = category === 'all'
     let activeIndex = 0
 
-    list?.classList.toggle('is-filtered', !isAll)
+    if (list) {
+      list.classList.toggle('is-filtered', !isAll)
+      if (isAll) {
+        list.style.removeProperty('grid-template-columns')
+      } else {
+        list.style.gridTemplateColumns = 'repeat(16, 1fr)'
+      }
+    }
 
     links.forEach((link, index) => {
       const isActive = isAll || linkCategories[index] === category
       const item = items[index]
       const frame = frames[index]
 
-      item.classList.toggle('is-active', isActive && !isAll)
-      item.classList.toggle('is-inactive', !isActive && !isAll)
-
       if (isAll) {
+        item.classList.remove('is-active', 'is-inactive')
         item.style.removeProperty('grid-column')
         item.style.removeProperty('grid-row')
         item.style.removeProperty('z-index')
@@ -160,6 +149,8 @@ export function initProjectList(root = document) {
         item.style.gridColumn = `${columnStart} / span 5`
         item.style.gridRow = String(row)
         item.style.zIndex = '2'
+        item.classList.add('is-active')
+        item.classList.remove('is-inactive')
         if (frame) {
           frame.style.width = FILTERED_FRAME_SIZES.active.width
           frame.style.height = FILTERED_FRAME_SIZES.active.height
@@ -170,6 +161,8 @@ export function initProjectList(root = document) {
       item.style.gridColumn = '14 / 16'
       item.style.gridRow = '1'
       item.style.zIndex = '1'
+      item.classList.add('is-inactive')
+      item.classList.remove('is-active')
       if (frame) {
         frame.style.width = FILTERED_FRAME_SIZES.inactive.width
         frame.style.height = FILTERED_FRAME_SIZES.inactive.height
@@ -218,16 +211,6 @@ export function initProjectList(root = document) {
     })
   }
 
-  const setProjectNumbers = () => {
-    links.forEach((link, index) => {
-      const numberEl = link.querySelector(SELECTORS.projectNumber)
-
-      if (numberEl) {
-        numberEl.textContent = formatIndex(index, padLength)
-      }
-    })
-  }
-
   const setCategoryLine = (lines, isActive, immediate = false) => {
     if (!lines.length) return
 
@@ -245,6 +228,8 @@ export function initProjectList(root = document) {
     if (!immediate && nextCategory === activeCategory) return
 
     activeFlip?.kill()
+    list?.style.removeProperty('min-height')
+    const currentListHeight = list?.getBoundingClientRect().height || 0
     const state = !immediate ? Flip.getState(flipTargets) : null
     const { activeTexts, inactiveTexts } = getCategoryTexts(nextCategory)
 
@@ -259,6 +244,11 @@ export function initProjectList(root = document) {
     })
 
     applyCategoryLayout(activeCategory)
+    const nextListHeight = list?.getBoundingClientRect().height || 0
+
+    if (state && list) {
+      list.style.minHeight = `${Math.max(currentListHeight, nextListHeight)}px`
+    }
 
     if (immediate) {
       animateCategoryText(activeCategory, true)
@@ -268,6 +258,7 @@ export function initProjectList(root = document) {
       activeFlip = Flip.from(state, {
         duration: 0.9,
         ease: 'power3.inOut',
+        absolute: items,
         nested: true,
         stagger: {
           each: 0.025,
@@ -275,6 +266,7 @@ export function initProjectList(root = document) {
         },
         overwrite: true,
         onComplete: () => {
+          list?.style.removeProperty('min-height')
           gsap.to(activeTexts, {
             y: '0%',
             opacity: 1,
@@ -366,7 +358,6 @@ export function initProjectList(root = document) {
     transformOrigin: 'left center',
   })
 
-  setProjectNumbers()
   setCategoryState('all', true)
 
   return () => {
@@ -377,6 +368,7 @@ export function initProjectList(root = document) {
       button.removeAttribute('aria-pressed')
     })
     list?.classList.remove('is-filtered')
+    list?.style.removeProperty('grid-template-columns')
     items.forEach((item, index) => {
       item.classList.remove('is-active', 'is-inactive')
       item.style.removeProperty('grid-column')
