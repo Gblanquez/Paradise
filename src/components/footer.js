@@ -87,7 +87,7 @@ export function initFooter(root = document) {
     })
 
     scrubTimeline.fromTo(footer,
-      { y: '20%' },
+      { y: '30%' },
       {
         y: '0%',
         ease: 'none',
