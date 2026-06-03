@@ -64,7 +64,7 @@ export default function imagesAnimation(root = document) {
       .to(imgWrapper, {
         scale: 1.5,
         scaleY: 0.94,
-        y: '-15%',
+        y: '-6%',
         ease: 'none',
       }, 0)
       .to(imgItem, {

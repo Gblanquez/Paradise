@@ -82,34 +82,25 @@ export function initLinkHover(root = document) {
     let gradientLayers = []
     let enterTl = null
     let leaveTl = null
-    const moveX = gsap.quickTo(parent, 'xPercent', {
+    const moveX = gsap.quickTo(parent, 'x', {
       duration: 0.35,
       ease: 'power3.out',
     })
-    const moveY = gsap.quickTo(parent, 'yPercent', {
+    const moveY = gsap.quickTo(parent, 'y', {
       duration: 0.35,
       ease: 'power3.out',
     })
 
     const moveParent = (event) => {
       const rect = container.getBoundingClientRect()
-
       if (!rect.width || !rect.height) return
 
-      const x = gsap.utils.clamp(-100, 100, gsap.utils.mapRange(
-        0,
-        rect.width,
-        -100,
-        100,
-        event.clientX - rect.left
-      ))
-      const y = gsap.utils.clamp(-100, 100, gsap.utils.mapRange(
-        0,
-        rect.height,
-        -100,
-        100,
-        event.clientY - rect.top
-      ))
+      const xProgress = gsap.utils.clamp(0, 1, (event.clientX - rect.left) / rect.width)
+      const yProgress = gsap.utils.clamp(0, 1, (event.clientY - rect.top) / rect.height)
+      const maxX = rect.width / 2
+      const maxY = rect.height / 2
+      const x = gsap.utils.mapRange(0, 1, -maxX, maxX, xProgress)
+      const y = gsap.utils.mapRange(0, 1, -maxY, maxY, yProgress)
 
       moveX(x)
       moveY(y)
@@ -228,12 +219,11 @@ export function initLinkHover(root = document) {
     const leave = () => {
       enterTl?.kill()
       leaveTl?.kill()
-      resetParentPosition()
 
       leaveTl = gsap.timeline({
         onComplete: () => {
           parent.classList.remove('block')
-          gsap.set(parent, { xPercent: 0, yPercent: 0, scale: 0 })
+          gsap.set(parent, { x: 0, y: 0, scale: 0 })
           resetEnterState()
         },
       })

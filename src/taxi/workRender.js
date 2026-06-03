@@ -3,7 +3,7 @@ import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import { initAboutSection } from '../components/aboutSection.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
-import { initFooter } from '../components/footer.js'
+import { ensureFooterSticky, initFooter } from '../components/footer.js'
 import { initGlobalLink } from '../components/globalLink.js'
 import imagesAnimation from '../components/imagesAnimation.js'
 import { initLinkHover } from '../components/linkHover.js'
@@ -12,7 +12,8 @@ import { initInfoVideo } from '../components/infoVideo.js'
 import { initLines } from '../components/lines.js'
 import { afterInitialLoad, initLoadAnimation } from '../components/load.js'
 import { initMask } from '../components/mask.js'
-import { initNavbar } from '../components/navbar.js'
+import { animateNavbarView, initNavbar, prepareNavbarView } from '../components/navbar.js'
+import { prepareAnimationStates } from '../components/prepareAnimationStates.js'
 import { initReel } from '../components/reel.js'
 import { initScaling } from '../components/scaling.js'
 import { lenis, startRAF } from '../components/scroll.js'
@@ -38,6 +39,7 @@ export default class workRender extends Renderer {
   destroyImagesAnimation = () => {}
   destroyLinkHover = () => {}
   destroyNavbar = () => {}
+  destroyNavbarView = () => {}
   destroyReel = () => {}
   destroyCta = () => {}
   destroyLines = () => {}
@@ -59,6 +61,8 @@ export default class workRender extends Renderer {
     this.destroyReel = initReel(document).destroy
     this.destroyCta = initCta(this.content)
     this.destroyLinkHover = initLinkHover(this.content)
+    this.destroyLoadAnimation = initLoadAnimation(this.content)
+    this.destroyFooter = initFooter(this.content)
     this.destroyInfoCarrousel = initInfoCarrousel(this.content)
 
     const infoVideo = initInfoVideo(this.content)
@@ -66,7 +70,8 @@ export default class workRender extends Renderer {
 
     const verticalVideos = initVerticalVideos(this.content)
     this.destroyVerticalVideos = () => verticalVideos.destroy()
-    this.destroyLoadAnimation = initLoadAnimation(this.content)
+    prepareAnimationStates(this.content)
+    prepareNavbarView(document)
 
     afterInitialLoad(() => {
       if (this.isLeaving) return
@@ -74,14 +79,15 @@ export default class workRender extends Renderer {
       this.destroyTitleText = titleTextReveal(this.content)
       this.destroyBodyText = bodyTextReveal(this.content)
       this.destroyImagesAnimation = imagesAnimation(this.content)
+      this.destroyNavbarView = animateNavbarView(document)
       this.destroyAboutSection = initAboutSection(this.content)
-      this.destroyFooter = initFooter(this.content)
       this.destroyLines = initLines(this.content)
       this.destroyMask = initMask(this.content)
     })
   }
 
   onEnterCompleted() {
+    ensureFooterSticky(this.content)
     window.dispatchEvent(new CustomEvent('page:entered'))
 
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
@@ -128,6 +134,8 @@ export default class workRender extends Renderer {
     this.destroyFooter = () => {}
     this.destroyNavbar()
     this.destroyNavbar = () => {}
+    this.destroyNavbarView()
+    this.destroyNavbarView = () => {}
     this.destroyReel()
     this.destroyReel = () => {}
     this.destroyCta()

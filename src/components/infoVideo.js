@@ -1,10 +1,15 @@
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { afterInitialLoad } from './load.js'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const SELECTORS = {
   video: '.info-video',
+  videoContainer: '.info-video-container',
   line: '.info-load-line',
   playToggleParent: '.play-toggle-parent',
-  playToggle: '[data-a="play-toggle"]',
+  playToggle: '[data-c="play-toggle"]',
 }
 
 function clamp(value, min, max) {
@@ -84,6 +89,7 @@ function getVideoScope(video, root) {
 
 function createInfoVideo(video, root, pauseOthers) {
   const scope = getVideoScope(video, root)
+  const videoContainer = video.closest(SELECTORS.videoContainer) || scope?.querySelector(SELECTORS.videoContainer)
   const line = scope?.querySelector(SELECTORS.line)
   const playToggleParent = scope?.querySelector(SELECTORS.playToggleParent)
   const playToggle = scope?.querySelector(SELECTORS.playToggle)
@@ -92,6 +98,8 @@ function createInfoVideo(video, root, pauseOthers) {
 
   let loadTween = null
   let lineTween = null
+  let revealTween = null
+  let isDestroyed = false
   let requestId = 0
   let isLoading = false
 
@@ -236,6 +244,37 @@ function createInfoVideo(video, root, pauseOthers) {
     opacity: 0,
   })
 
+  if (videoContainer) {
+    gsap.set(videoContainer, {
+      scale: 1.2,
+      rotation: -20,
+      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+      transformOrigin: 'center center',
+      willChange: 'clip-path, transform',
+    })
+
+    afterInitialLoad(() => {
+      window.requestAnimationFrame(() => {
+        if (isDestroyed || revealTween) return
+
+        revealTween = gsap.to(videoContainer, {
+          scale: 1,
+          rotation: 0,
+          clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+          duration: 1.4,
+          ease: 'power3.inOut',
+          scrollTrigger: {
+            trigger: videoContainer,
+            start: 'top bottom',
+            once: true,
+          },
+        })
+
+        ScrollTrigger.refresh()
+      })
+    })
+  }
+
   scope.addEventListener('click', handleClick)
   scope.addEventListener('pointerenter', showToggle)
   scope.addEventListener('pointerleave', hideToggle)
@@ -246,6 +285,7 @@ function createInfoVideo(video, root, pauseOthers) {
     video,
     pause,
     destroy: () => {
+      isDestroyed = true
       pause()
       scope.removeEventListener('click', handleClick)
       scope.removeEventListener('pointerenter', showToggle)
@@ -254,8 +294,11 @@ function createInfoVideo(video, root, pauseOthers) {
       video.removeEventListener('pause', syncToggleLabel)
       loadTween?.kill()
       lineTween?.kill()
+      revealTween?.scrollTrigger?.kill()
+      revealTween?.kill()
       gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
       gsap.set(playToggleParent, { clearProps: 'opacity' })
+      gsap.set(videoContainer || [], { clearProps: 'clipPath,transform,transformOrigin,willChange' })
     },
   }
 }

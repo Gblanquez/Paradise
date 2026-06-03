@@ -259,6 +259,7 @@ export function initLoadAnimation(root = document) {
 	            onComplete: () => {
 	              gsap.set(content || [], { display: 'none' })
 	              gsap.set(pageMain || [], { opacity: 1 })
+	              completeLoad()
 	
 	              requestAnimationFrame(() => {
 	                requestAnimationFrame(() => {
@@ -285,7 +286,6 @@ export function initLoadAnimation(root = document) {
 	                        clearProps: 'transformOrigin',
 	                      })
 	                      cleanup()
-	                      completeLoad()
 	                    },
 	                  })
 	                })

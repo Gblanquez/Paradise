@@ -1,10 +1,9 @@
 import { Renderer } from '@unseenco/taxi'
-import { gsap } from 'gsap'
 import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import { initAboutSection } from '../components/aboutSection.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
-import { initFooter } from '../components/footer.js'
+import { ensureFooterSticky, initFooter } from '../components/footer.js'
 import { initGlobalLink } from '../components/globalLink.js'
 import { initHeroSection } from '../components/heroSection.js'
 import imagesAnimation from '../components/imagesAnimation.js'
@@ -12,8 +11,9 @@ import { initLinkHover } from '../components/linkHover.js'
 import { initLines } from '../components/lines.js'
 import { afterInitialLoad, initLoadAnimation } from '../components/load.js'
 import { initMask } from '../components/mask.js'
-import { initNavbar } from '../components/navbar.js'
+import { animateNavbarView, initNavbar, prepareNavbarView } from '../components/navbar.js'
 import { initReel } from '../components/reel.js'
+import { prepareAnimationStates } from '../components/prepareAnimationStates.js'
 import { initScaling } from '../components/scaling.js'
 import { lenis, startRAF } from '../components/scroll.js'
 import { initShowcaseSection } from '../components/showcaseSection.js'
@@ -38,6 +38,7 @@ export default class globalRender extends Renderer {
   destroyHeroSection = () => {}
   destroyLinkHover = () => {}
   destroyNavbar = () => {}
+  destroyNavbarView = () => {}
   destroyReel = () => {}
   destroyCta = () => {}
   destroyLines = () => {}
@@ -56,22 +57,9 @@ export default class globalRender extends Renderer {
     this.destroyCta = initCta(this.content)
     this.destroyLinkHover = initLinkHover(this.content)
     this.destroyLoadAnimation = initLoadAnimation(this.content)
-
-    const textRevealTargets = gsap.utils.toArray('[data-a="title-text"], [data-a="body-text"]', this.content)
-    const heroVideoMasks = gsap.utils.toArray('[data-a="video-mask"]', this.content)
-
-    if (textRevealTargets.length) {
-      gsap.set(textRevealTargets, { autoAlpha: 0 })
-    }
-
-    if (heroVideoMasks.length) {
-      gsap.set(heroVideoMasks, {
-        scale: 1.2,
-        rotation: -20,
-        clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
-        transformOrigin: 'center center',
-      })
-    }
+    this.destroyFooter = initFooter(this.content)
+    prepareAnimationStates(this.content)
+    prepareNavbarView(document)
 
     afterInitialLoad(() => {
       if (this.isLeaving) return
@@ -82,6 +70,7 @@ export default class globalRender extends Renderer {
         if (hasInitializedTextReveals) return
 
         hasInitializedTextReveals = true
+        this.destroyNavbarView = animateNavbarView(document)
         this.destroyTitleText = titleTextReveal(this.content)
         this.destroyBodyText = bodyTextReveal(this.content)
       }
@@ -97,13 +86,13 @@ export default class globalRender extends Renderer {
       this.destroyTalent = initTalent(this.content)
       this.destroyWhySection = initWhySection(this.content)
     //   this.destroyWorkCarrousel = initWorkCarrousel(this.content)
-      this.destroyFooter = initFooter(this.content)
       this.destroyLines = initLines(this.content)
       this.destroyMask = initMask(this.content)
     })
   }
 
   onEnterCompleted() {
+    ensureFooterSticky(this.content)
     window.dispatchEvent(new CustomEvent('page:entered'))
 
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
@@ -160,6 +149,8 @@ export default class globalRender extends Renderer {
     this.destroyLinkHover = () => {}
     this.destroyNavbar()
     this.destroyNavbar = () => {}
+    this.destroyNavbarView()
+    this.destroyNavbarView = () => {}
     this.destroyReel()
     this.destroyReel = () => {}
     this.destroyCta()

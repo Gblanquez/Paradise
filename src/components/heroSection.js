@@ -69,7 +69,7 @@ export function initHeroSection(root = document, options = {}) {
       scale: 1,
       rotation: 0,
       clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-      duration: 1.4,
+      duration: 1.2,
       ease: 'power3.inOut',
       onComplete: () => playVideo(video),
     })

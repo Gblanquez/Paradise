@@ -27,7 +27,7 @@ export default class globalTransition extends Transition {
     const { parent, boxes } = getTransitionElements()
 
     if (!parent || !boxes.length) {
-      lenis.stop()
+      lenis.start()
       done()
       return
     }
@@ -56,7 +56,6 @@ export default class globalTransition extends Transition {
         window.dispatchEvent(new CustomEvent('global-transition-cover-start'))
       },
       onComplete: () => {
-        lenis.stop()
         done()
       },
     })
@@ -76,7 +75,6 @@ export default class globalTransition extends Transition {
     window.scrollTo(0, 0)
 
     if (!parent || !boxes.length) {
-      lenis.start()
       done()
       return
     }

@@ -24,6 +24,7 @@ const SELECTORS = {
   logoParent: '.logo-parent',
   linksHolder: '.nav-links-holder',
   linkChild: '[data-a="link-child"]',
+  viewBox: '[data-a="nav-box"]',
 }
 
 const GRADIENT = `linear-gradient(
@@ -42,6 +43,42 @@ const GRADIENT = `linear-gradient(
 )`
 
 const CLOSE_CIRCLE_PATH = 'M15.2 7.5C15.2 11.4765 11.9765 14.7 8 14.7C4.02355 14.7 0.8 11.4765 0.8 7.5C0.8 3.52355 4.02355 0.3 8 0.3C11.9765 0.3 15.2 3.52355 15.2 7.5Z'
+
+export function prepareNavbarView(root = document) {
+  const boxes = gsap.utils.toArray(SELECTORS.viewBox, root)
+
+  if (!boxes.length) return
+
+  gsap.set(boxes, {
+    autoAlpha: 0,
+    yPercent: -110,
+    willChange: 'opacity, transform',
+  })
+}
+
+export function animateNavbarView(root = document) {
+  const boxes = gsap.utils.toArray(SELECTORS.viewBox, root)
+
+  if (!boxes.length) return () => {}
+
+  gsap.killTweensOf(boxes)
+
+  const tween = gsap.to(boxes, {
+    autoAlpha: 1,
+    yPercent: 0,
+    duration: 0.8,
+    ease: 'power3.out',
+    stagger: 0.08,
+    overwrite: true,
+    onComplete: () => {
+      gsap.set(boxes, { clearProps: 'willChange' })
+    },
+  })
+
+  return () => {
+    tween.kill()
+  }
+}
 
 function createGradientLayer(char) {
   if (!char.textContent.trim()) return null
@@ -175,6 +212,7 @@ export function initNavbar(root = document) {
           display: 'flex',
           clipPath: 'inset(0% 0% 0% 0%)',
           overflow: 'hidden',
+          willChange: 'clip-path',
         })
 
         scrollTween = gsap.timeline({
@@ -184,7 +222,7 @@ export function initNavbar(root = document) {
             overwrite: true,
           },
           onComplete: () => {
-            gsap.set(linksHolder, { display: 'none' })
+            gsap.set(linksHolder, { display: 'none', clearProps: 'overflow,willChange' })
             gsap.set(layoutItems, { clearProps: 'transform' })
           },
         })
@@ -210,6 +248,7 @@ export function initNavbar(root = document) {
         display: 'flex',
         clipPath: 'inset(0% 50% 0% 50%)',
         overflow: 'hidden',
+        willChange: 'clip-path',
       })
 
       const afterRects = getLayoutRects()
@@ -234,7 +273,7 @@ export function initNavbar(root = document) {
         .to(linksHolder, {
           clipPath: 'inset(0% 0% 0% 0%)',
           onComplete: () => {
-            gsap.set(linksHolder, { clearProps: 'overflow' })
+            gsap.set(linksHolder, { clearProps: 'overflow,willChange' })
           },
         }, 0)
         .to(layoutItems, {
@@ -245,7 +284,7 @@ export function initNavbar(root = document) {
           yPercent: 0,
           opacity: 1,
           stagger: 0.025,
-        }, 0)
+        }, 0.1)
     }
 
     scrollTrigger = ScrollTrigger.create({

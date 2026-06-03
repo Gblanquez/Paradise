@@ -1,6 +1,11 @@
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const SELECTORS = {
+  section: '#why-us',
+  line: '[data-a="why-line"]',
   parent: '.why-swiper-parent',
   list: '.why-swiper-list',
   item: '.why-swiper-item',
@@ -15,11 +20,34 @@ function clamp(value, min, max) {
 }
 
 export function initWhySection(root = document) {
+  const section = root.querySelector(SELECTORS.section) || document.querySelector(SELECTORS.section)
+  const lines = section ? gsap.utils.toArray(SELECTORS.line, section) : []
   const parents = gsap.utils.toArray(SELECTORS.parent, root)
   const fallbackNextToggle = root.querySelector(SELECTORS.next) || document.querySelector(SELECTORS.next)
   const fallbackPrevToggle = root.querySelector(SELECTORS.prev) || document.querySelector(SELECTORS.prev)
 
-  if (!parents.length) return () => {}
+  if (!parents.length && !lines.length) return () => {}
+
+  let lineTween = null
+
+  if (section && lines.length) {
+    gsap.set(lines, {
+      scaleY: 0,
+      transformOrigin: 'top center',
+    })
+
+    lineTween = gsap.to(lines, {
+      scaleY: 1,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: section,
+        start: 'top bottom',
+        end: 'top top',
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    })
+  }
 
   const sliders = parents.map((parent) => {
     const list = parent.querySelector(SELECTORS.list)
@@ -255,6 +283,9 @@ export function initWhySection(root = document) {
   })
 
   return () => {
+    lineTween?.scrollTrigger?.kill()
+    lineTween?.kill()
+    gsap.set(lines, { clearProps: 'transform,transformOrigin' })
     sliders.forEach((slider) => slider.destroy())
   }
 }
