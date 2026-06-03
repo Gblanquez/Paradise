@@ -124,22 +124,21 @@ export function initTalent(root = document) {
       hoverTween = gsap.to(boxes, {
         xPercent: 0,
         scaleX: 1,
-        duration: 0.55,
-        ease: 'power3.out',
-        stagger: 0.08,
+        duration: 1.2,
+        ease: 'expo.out',
         overwrite: true,
       })
     }
 
     const leave = () => {
       hoverTween?.kill()
-      gsap.set(boxes, { transformOrigin: 'right center' })
+      gsap.set(boxes, { transformOrigin: 'left center' })
 
       hoverTween = gsap.to(boxes, {
-        scaleX: 0,
-        duration: 0.4,
-        ease: 'power3.in',
-        stagger: 0.06,
+        xPercent: -110,
+        scaleX: 1,
+        duration: 1.2,
+        ease: 'expo.out',
         overwrite: true,
       })
     }
