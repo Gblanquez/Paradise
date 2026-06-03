@@ -1,6 +1,5 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { addScrollListener } from './scroll.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -33,85 +32,40 @@ function queryScoped(root, selector, allowDocumentFallback = false) {
 }
 
 export function initFooter(root = document) {
-  const footer = queryScoped(root, SELECTORS.footer, true) || queryScoped(root, SELECTORS.footerFallback, true)
-  const trigger = queryScoped(root, SELECTORS.trigger, true)
+  const footer = queryScoped(root, SELECTORS.footer) || queryScoped(root, SELECTORS.footerFallback)
+  const trigger = queryScoped(root, SELECTORS.trigger)
     || footer?.previousElementSibling
 
   if (!footer || !trigger) return () => {}
 
   footer._paradiseFooterDestroy?.()
 
-  let scrubTimeline = null
-  let refreshFrame = null
-  let refreshTimer = null
-  let createFrame = null
-  let createAttempts = 0
-  let isDestroyed = false
+  gsap.set(footer, {
+    position: 'sticky',
+    bottom: 0,
+  })
 
-  const refreshFooter = () => {
-    if (isDestroyed) return
-    if (refreshFrame) window.cancelAnimationFrame(refreshFrame)
-    if (refreshTimer) window.clearTimeout(refreshTimer)
+  const scrubTimeline = gsap.timeline({
+    scrollTrigger: {
+      trigger,
+      start: 'bottom bottom',
+      end: 'bottom top',
+      scrub: true,
+      invalidateOnRefresh: true,
+    },
+  })
 
-    refreshFrame = window.requestAnimationFrame(() => {
-      refreshFrame = window.requestAnimationFrame(() => {
-        ScrollTrigger.refresh()
-        refreshTimer = window.setTimeout(() => {
-          ScrollTrigger.refresh()
-        }, 120)
-      })
-    })
-  }
-
-  const createTriggers = () => {
-    if (isDestroyed) return
-    const rect = footer.getBoundingClientRect()
-
-    if ((!rect.width || !rect.height) && createAttempts < 90) {
-      createAttempts += 1
-      createFrame = window.requestAnimationFrame(createTriggers)
-      return
+  scrubTimeline.fromTo(footer,
+    { y: '30%' },
+    {
+      y: '0%',
+      ease: 'none',
     }
+  )
 
-    scrubTimeline?.scrollTrigger?.kill()
-    scrubTimeline?.kill()
-
-    scrubTimeline = gsap.timeline({
-      scrollTrigger: {
-        trigger,
-        start: 'bottom bottom',
-        end: 'bottom top',
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-    })
-
-    scrubTimeline.fromTo(footer,
-      { y: '30%' },
-      {
-        y: '0%',
-        ease: 'none',
-      }
-    )
-
-    refreshFooter()
-  }
-
-  const removeScrollListener = addScrollListener(() => ScrollTrigger.update())
-  window.addEventListener('page:entered', refreshFooter)
-  window.addEventListener('projects:layout-ready', refreshFooter)
-  window.addEventListener('load', refreshFooter)
-  createFrame = window.requestAnimationFrame(createTriggers)
+  requestAnimationFrame(() => ScrollTrigger.refresh())
 
   const destroy = () => {
-    isDestroyed = true
-    removeScrollListener()
-    window.removeEventListener('page:entered', refreshFooter)
-    window.removeEventListener('projects:layout-ready', refreshFooter)
-    window.removeEventListener('load', refreshFooter)
-    if (createFrame) window.cancelAnimationFrame(createFrame)
-    if (refreshFrame) window.cancelAnimationFrame(refreshFrame)
-    if (refreshTimer) window.clearTimeout(refreshTimer)
     scrubTimeline?.scrollTrigger?.kill()
     scrubTimeline?.kill()
     if (footer._paradiseFooterDestroy === destroy) {
@@ -129,8 +83,8 @@ export function initFooter(root = document) {
 
 export function ensureFooterSticky(root = document) {
   const footers = [
-    queryScoped(root, SELECTORS.footer, true),
-    queryScoped(root, SELECTORS.footerFallback, true),
+    queryScoped(root, SELECTORS.footer),
+    queryScoped(root, SELECTORS.footerFallback),
   ].filter(Boolean)
 
   ;[...new Set(footers)].forEach((footer) => {
