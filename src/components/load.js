@@ -13,8 +13,6 @@ const SELECTORS = {
   progressLine: '.line-load-page',
   svgWrap: '.load-svg-wrap',
   logoPath: '.logo-svg path',
-  boxOne: '.transition-box-one',
-  boxTwo: '.transition-box-two',
   videos: '.reel-video, .info-video',
 }
 
@@ -147,10 +145,6 @@ export function initLoadAnimation(root = document) {
   const lineElements = [line, progressLine].filter(Boolean).filter((item, index, array) => array.indexOf(item) === index)
   const svgWrap = parent.querySelector(SELECTORS.svgWrap)
   const logoPaths = gsap.utils.toArray(SELECTORS.logoPath, parent)
-  const boxes = [
-    document.querySelector(SELECTORS.boxTwo),
-    document.querySelector(SELECTORS.boxOne),
-  ].filter(Boolean)
   const videos = gsap.utils.toArray(SELECTORS.videos, root)
   const splits = []
   const lines = []
@@ -197,11 +191,6 @@ export function initLoadAnimation(root = document) {
   gsap.set(pageMain || [], { opacity: 0 })
   gsap.set(content || [], { display: 'flex' })
   gsap.set(loadTexts, { autoAlpha: 0 })
-  gsap.set(boxes, {
-    yPercent: 110,
-    rotation: 45,
-    transformOrigin: 'left bottom',
-  })
   gsap.set(line || [], {
     scaleX: 0,
     transformOrigin: 'left center',
@@ -280,11 +269,6 @@ export function initLoadAnimation(root = document) {
                         visibility: 'hidden',
 	                      })
 	                      gsap.set(parent, { clearProps: 'backgroundColor' })
-	                      gsap.set(boxes, {
-	                        yPercent: 110,
-	                        rotation: 45,
-	                        clearProps: 'transformOrigin',
-	                      })
 	                      cleanup()
 	                    },
 	                  })
@@ -313,14 +297,6 @@ export function initLoadAnimation(root = document) {
               ease: 'power2.out',
               overwrite: true,
             }, 0)
-            .to(boxes, {
-              yPercent: 0,
-              rotation: 0,
-              duration: 0.85,
-              ease: 'power3.inOut',
-              stagger: 0.08,
-              overwrite: true,
-            }, 0.36)
         },
       })
     },

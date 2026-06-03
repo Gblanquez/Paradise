@@ -62,8 +62,7 @@ export default function imagesAnimation(root = document) {
 
     scrubTl
       .to(imgWrapper, {
-        scale: 1.5,
-        scaleY: 0.94,
+        scale: 1.16,
         y: '-6%',
         ease: 'none',
       }, 0)
