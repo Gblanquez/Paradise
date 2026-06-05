@@ -43,23 +43,29 @@ export function initCta(root = document) {
       return { destroy: () => {} }
     }
 
-    gsap.set(svgWrap || [], {
-      x: '0rem',
-      willChange: 'transform',
-    })
+    if (svgWrap) {
+      gsap.set(svgWrap, {
+        x: '0rem',
+        willChange: 'transform',
+      })
+    }
 
-    gsap.set(path || [], {
-      attr: { d: CIRCLE_PATH },
-    })
+    if (path) {
+      gsap.set(path, {
+        attr: { d: CIRCLE_PATH },
+      })
+    }
 
-    gsap.set(globalLinkBox || [], {
-      scale: 0,
-      x: '20%',
-      y: '-50%',
-      rotation: 45,
-      transformOrigin: 'top right',
-      willChange: 'transform',
-    })
+    if (globalLinkBox) {
+      gsap.set(globalLinkBox, {
+        scale: 0,
+        x: '20%',
+        y: '-50%',
+        rotation: 45,
+        transformOrigin: 'top right',
+        willChange: 'transform',
+      })
+    }
 
     const show = () => {
       tween?.kill()
@@ -71,18 +77,25 @@ export function initCta(root = document) {
           overwrite: true,
         },
       })
-        .to(globalLinkBox || [], {
+
+      if (globalLinkBox) {
+        tween.to(globalLinkBox, {
           scale: 1.3,
           x: '0%',
           y: '0%',
           rotation: 0,
         }, 0)
-        .to(svgWrap || [], {
+      }
+      if (svgWrap) {
+        tween.to(svgWrap, {
           x: '10rem',
         }, 0)
-        .to(path || [], {
+      }
+      if (path) {
+        tween.to(path, {
           attr: { d: ARROW_PATH },
         }, 0)
+      }
     }
 
     const hide = () => {
@@ -95,18 +108,25 @@ export function initCta(root = document) {
           overwrite: true,
         },
       })
-        .to(globalLinkBox || [], {
+
+      if (globalLinkBox) {
+        tween.to(globalLinkBox, {
           scale: 0,
           x: '20%',
           y: '-50%',
           rotation: 45,
         }, 0)
-        .to(svgWrap || [], {
+      }
+      if (svgWrap) {
+        tween.to(svgWrap, {
           x: '0rem',
         }, 0)
-        .to(path || [], {
+      }
+      if (path) {
+        tween.to(path, {
           attr: { d: CIRCLE_PATH },
         }, 0)
+      }
     }
 
     cta.addEventListener('pointerenter', show)
@@ -121,9 +141,15 @@ export function initCta(root = document) {
         cta.removeEventListener('pointerleave', hide)
         cta.removeEventListener('focus', show)
         cta.removeEventListener('blur', hide)
-        gsap.set(svgWrap || [], { clearProps: 'transform,willChange' })
-        gsap.set(globalLinkBox || [], { clearProps: 'transform,transformOrigin,willChange' })
-        gsap.set(path || [], { clearProps: 'attr' })
+        if (svgWrap) {
+          gsap.set(svgWrap, { clearProps: 'transform,willChange' })
+        }
+        if (globalLinkBox) {
+          gsap.set(globalLinkBox, { clearProps: 'transform,transformOrigin,willChange' })
+        }
+        if (path) {
+          gsap.set(path, { clearProps: 'attr' })
+        }
       },
     }
   })

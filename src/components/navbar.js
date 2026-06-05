@@ -158,26 +158,32 @@ export function initNavbar(root = document) {
     transformOrigin: 'top right',
   })
   gsap.set(closeToggle, { opacity: 0 })
-  gsap.set(closePath || [], {
-    opacity: 1,
-    scale: 1,
-    rotation: 0,
-    transformOrigin: 'center center',
-  })
-  gsap.set(closeArrow || [], {
-    scale: 1,
-    rotation: 0,
-    transformOrigin: 'center center',
-    willChange: 'transform',
-  })
-  gsap.set(closeBox || [], {
-    scale: 0,
-    x: '20%',
-    y: '-50%',
-    rotation: 45,
-    transformOrigin: 'top right',
-    willChange: 'transform',
-  })
+  if (closePath) {
+    gsap.set(closePath, {
+      opacity: 1,
+      scale: 1,
+      rotation: 0,
+      transformOrigin: 'center center',
+    })
+  }
+  if (closeArrow) {
+    gsap.set(closeArrow, {
+      scale: 1,
+      rotation: 0,
+      transformOrigin: 'center center',
+      willChange: 'transform',
+    })
+  }
+  if (closeBox) {
+    gsap.set(closeBox, {
+      scale: 0,
+      x: '20%',
+      y: '-50%',
+      rotation: 45,
+      transformOrigin: 'top right',
+      willChange: 'transform',
+    })
+  }
   gsap.set(navImages, {
     clipPath: 'inset(100% 0% 0% 0%)',
     overflow: 'hidden',
@@ -553,17 +559,21 @@ export function initNavbar(root = document) {
             transformOrigin: 'top right',
           })
           gsap.set(closeToggle, { opacity: 0 })
-          gsap.set(closeBox || [], {
-            scale: 0,
-            x: '20%',
-            y: '-50%',
-            rotation: 45,
-            transformOrigin: 'top right',
-          })
-          if (closePathDefault) {
-            gsap.set(closePath || [], { attr: { d: closePathDefault }, opacity: 1, scale: 1, rotation: 0 })
+          if (closeBox) {
+            gsap.set(closeBox, {
+              scale: 0,
+              x: '20%',
+              y: '-50%',
+              rotation: 45,
+              transformOrigin: 'top right',
+            })
           }
-          gsap.set(closeArrow || [], { scale: 1, rotation: 0 })
+          if (closePath && closePathDefault) {
+            gsap.set(closePath, { attr: { d: closePathDefault }, opacity: 1, scale: 1, rotation: 0 })
+          }
+          if (closeArrow) {
+            gsap.set(closeArrow, { scale: 1, rotation: 0 })
+          }
           gsap.set(navImages, { clipPath: 'inset(100% 0% 0% 0%)' })
 
           cleanupNavText()
@@ -835,10 +845,14 @@ export function initNavbar(root = document) {
     gsap.set(navLinks, { clearProps: 'opacity' })
     gsap.set(navOp, { clearProps: 'opacity,transform,transformOrigin,willChange' })
     gsap.set(closeToggle, { clearProps: 'opacity' })
-    gsap.set(closeBox || [], { clearProps: 'transform,transformOrigin,willChange' })
-    gsap.set(closeArrow || [], { clearProps: 'transform,transformOrigin,willChange' })
-    if (closePathDefault) {
-      gsap.set(closePath || [], { attr: { d: closePathDefault }, clearProps: 'opacity,transform,transformOrigin' })
+    if (closeBox) {
+      gsap.set(closeBox, { clearProps: 'transform,transformOrigin,willChange' })
+    }
+    if (closeArrow) {
+      gsap.set(closeArrow, { clearProps: 'transform,transformOrigin,willChange' })
+    }
+    if (closePath && closePathDefault) {
+      gsap.set(closePath, { attr: { d: closePathDefault }, clearProps: 'opacity,transform,transformOrigin' })
     }
     gsap.set(navImages, { clearProps: 'clipPath,overflow' })
     gsap.set(linksHolder, { clearProps: 'display,overflow,clipPath' })

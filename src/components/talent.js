@@ -324,28 +324,36 @@ export function initTalent(root = document) {
     content.addEventListener('wheel', keepPanelScrollLocal, { passive: true })
     content.addEventListener('touchmove', keepPanelScrollLocal, { passive: true })
 
-    gsap.set(projectImages, {
-      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
-      overflow: 'hidden',
-      transformOrigin: 'center center',
-      willChange: 'clip-path',
-    })
+    if (projectImages.length) {
+      gsap.set(projectImages, {
+        clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+        overflow: 'hidden',
+        transformOrigin: 'center center',
+        willChange: 'clip-path',
+      })
+    }
 
-    gsap.set(lines, {
-      scaleX: 0,
-      transformOrigin: 'top right',
-      willChange: 'transform',
-    })
+    if (lines.length) {
+      gsap.set(lines, {
+        scaleX: 0,
+        transformOrigin: 'top right',
+        willChange: 'transform',
+      })
+    }
 
-    gsap.set(movingBoxes, {
-      xPercent: 110,
-      willChange: 'transform',
-    })
+    if (movingBoxes.length) {
+      gsap.set(movingBoxes, {
+        xPercent: 110,
+        willChange: 'transform',
+      })
+    }
 
-    gsap.set(bgBlur, {
-      opacity: 0,
-      willChange: 'opacity',
-    })
+    if (bgBlur) {
+      gsap.set(bgBlur, {
+        opacity: 0,
+        willChange: 'opacity',
+      })
+    }
 
     const open = () => {
       if (isOpen) return
@@ -532,11 +540,21 @@ export function initTalent(root = document) {
         content.style.webkitOverflowScrolling = ''
         gsap.set(content, { clearProps: 'position,inset,width,height,zIndex,display,opacity,visibility,pointerEvents,overflowX,overflowY,overscrollBehavior,touchAction,willChange' })
         gsap.set(talentContainer, { clearProps: 'transform,willChange' })
-        gsap.set(imageWrap, { clearProps: 'overflow' })
-        gsap.set(lines, { clearProps: 'transform,transformOrigin,willChange' })
-        gsap.set(projectImages, { clearProps: 'clipPath,overflow,transformOrigin,willChange' })
-        gsap.set(movingBoxes, { clearProps: 'transform,willChange' })
-        gsap.set(bgBlur, { clearProps: 'opacity,willChange' })
+        if (imageWrap) {
+          gsap.set(imageWrap, { clearProps: 'overflow' })
+        }
+        if (lines.length) {
+          gsap.set(lines, { clearProps: 'transform,transformOrigin,willChange' })
+        }
+        if (projectImages.length) {
+          gsap.set(projectImages, { clearProps: 'clipPath,overflow,transformOrigin,willChange' })
+        }
+        if (movingBoxes.length) {
+          gsap.set(movingBoxes, { clearProps: 'transform,willChange' })
+        }
+        if (bgBlur) {
+          gsap.set(bgBlur, { clearProps: 'opacity,willChange' })
+        }
 
         if (originalParent?.isConnected) {
           originalParent.insertBefore(content, originalNextSibling)

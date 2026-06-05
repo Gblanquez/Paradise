@@ -616,12 +616,12 @@ export function initReel(root = document) {
       document.removeEventListener('pointermove', moveScrub)
       document.removeEventListener('pointerup', endScrub)
       document.removeEventListener('pointercancel', endScrub)
-      gsap.set(line, { clearProps: 'height,transform' })
-      gsap.set(child, { clearProps: 'clipPath,overflow' })
-      gsap.set(videoParent, { clearProps: 'transform,transformOrigin' })
-      gsap.set(timeline, { clearProps: 'transform,transformOrigin' })
-      gsap.set(togglesParent, { clearProps: 'clipPath,overflow' })
-      gsap.set(settings, { clearProps: 'opacity' })
+      if (line) gsap.set(line, { clearProps: 'height,transform' })
+      if (child) gsap.set(child, { clearProps: 'clipPath,overflow' })
+      if (videoParent) gsap.set(videoParent, { clearProps: 'transform,transformOrigin' })
+      if (timeline) gsap.set(timeline, { clearProps: 'transform,transformOrigin' })
+      if (togglesParent) gsap.set(togglesParent, { clearProps: 'clipPath,overflow' })
+      if (settings) gsap.set(settings, { clearProps: 'opacity' })
     },
   }
 }

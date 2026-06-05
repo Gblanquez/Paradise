@@ -85,11 +85,15 @@ export default function imagesAnimation(root = document) {
     timelines.forEach((tl) => tl.kill())
     triggers.forEach((trigger) => trigger?.kill())
     imgTrigger.forEach((trigger) => {
-      const imgWrapper = trigger.querySelector('[data-a="mask"]')
+      const imgWrapper = trigger.querySelector('[data-a="mask-project"]')
       const imgItem = trigger.querySelector('[data-a="scale"]')
 
-      gsap.set(imgWrapper || [], { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange' })
-      gsap.set(imgItem || [], { clearProps: 'transform,willChange,transformOrigin' })
+      if (imgWrapper) {
+        gsap.set(imgWrapper, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange' })
+      }
+      if (imgItem) {
+        gsap.set(imgItem, { clearProps: 'transform,willChange,transformOrigin' })
+      }
     })
   }
 }

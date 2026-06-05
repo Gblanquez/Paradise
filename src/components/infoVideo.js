@@ -298,7 +298,9 @@ function createInfoVideo(video, root, pauseOthers) {
       revealTween?.kill()
       gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
       gsap.set(playToggleParent, { clearProps: 'opacity' })
-      gsap.set(videoContainer || [], { clearProps: 'clipPath,transform,transformOrigin,willChange' })
+      if (videoContainer) {
+        gsap.set(videoContainer, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
+      }
     },
   }
 }

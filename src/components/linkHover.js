@@ -286,7 +286,9 @@ export function initLinkHover(root = document) {
         gsap.set(parent, { clearProps: 'transform,transformOrigin' })
         gsap.set(boxElements, { clearProps: 'transform,transformOrigin,willChange' })
         if (label) gsap.set(label, { clearProps: 'opacity,visibility' })
-        gsap.set(gradientLayers, { clearProps: 'opacity,visibility,willChange' })
+        if (gradientLayers.length) {
+          gsap.set(gradientLayers, { clearProps: 'opacity,visibility,willChange' })
+        }
 
         if (split && !split._isReverted) {
           split.revert()

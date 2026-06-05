@@ -243,10 +243,12 @@ export function initWhySection(root = document) {
       willChange: 'transform',
     })
 
-    gsap.set(dragContent, {
-      userSelect: 'none',
-      WebkitUserDrag: 'none',
-    })
+    if (dragContent.length) {
+      gsap.set(dragContent, {
+        userSelect: 'none',
+        WebkitUserDrag: 'none',
+      })
+    }
 
     dragContent.forEach((element) => element.setAttribute('draggable', 'false'))
     measure()
@@ -276,7 +278,9 @@ export function initWhySection(root = document) {
         dragContent.forEach((element) => element.removeAttribute('draggable'))
         gsap.set(parent, { clearProps: 'overflow,touchAction,cursor,userSelect' })
         gsap.set(list, { clearProps: 'transform,willChange' })
-        gsap.set(dragContent, { clearProps: 'userSelect,WebkitUserDrag' })
+        if (dragContent.length) {
+          gsap.set(dragContent, { clearProps: 'userSelect,WebkitUserDrag' })
+        }
         gsap.set([nextToggle, prevToggle].filter(Boolean), { clearProps: 'opacity,pointerEvents' })
       },
     }
