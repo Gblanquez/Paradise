@@ -128,8 +128,8 @@ body {
   
     .body,
     .timer{
-      font-size: calc(18 / 480 * 100 * var(--vw));
-      line-height: 1.1;
+      font-size: calc(20 / 480 * 100 * var(--vw));
+      line-height: 1.2;
     }
   
     .subtitle {
