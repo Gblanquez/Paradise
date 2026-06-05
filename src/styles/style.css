@@ -133,8 +133,8 @@ body {
     }
   
     .subtitle {
-      font-size: calc(28 / 480 * 100 * var(--vw));
-      line-height: 1.1;
+      font-size: calc(42 / 480 * 100 * var(--vw));
+      line-height: 0.9;
     }
 
       
