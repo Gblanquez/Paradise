@@ -1,6 +1,6 @@
-/* :root{
+:root{
     --vw: 0.01vw;
-} */
+}
 
 .ft-project-parent
 {
@@ -14,8 +14,8 @@
 }
 
 html {
-    /* font-size: calc(18 / 1728 * 100 * var(--vw)); */
-    /* line-height: 1.3; */
+    font-size: calc(18 / 1728 * 100 * var(--vw));
+    line-height: 1.3;
     scrollbar-width: none;
   }
 
