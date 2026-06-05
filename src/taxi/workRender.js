@@ -53,7 +53,7 @@ export default class workRender extends Renderer {
   onEnter() {
     // basic Taxi renderer
     this.isLeaving = false
-    initScaling()
+    // initScaling()
     startRAF()
 
     this.destroyGlobalLink = initGlobalLink(this.content)
