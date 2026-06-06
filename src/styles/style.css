@@ -128,12 +128,12 @@ body {
   
     .body,
     .timer{
-      font-size: calc(22 / 480 * 100 * var(--vw));
+      font-size: calc(16 / 480 * 100 * var(--vw));
       line-height: 1.3;
     }
   
     .subtitle {
-      font-size: calc(42 / 480 * 100 * var(--vw));
+      font-size: calc(32 / 480 * 100 * var(--vw));
       line-height: 0.9;
     }
 
@@ -150,9 +150,14 @@ body {
     }
   
     .label {
-      font-size: calc(14 / 480 * 100 * var(--vw));
+      font-size: calc(12 / 480 * 100 * var(--vw));
       line-height: 1.1;
     }
+
+    .sub-label {
+        font-size: calc(12 / 480 * 100 * var(--vw));
+        line-height: 1.1;
+      }
 
 
   }
