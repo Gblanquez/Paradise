@@ -17,7 +17,7 @@ const SELECTORS = {
   videos: '.reel-video, .info-video, .main-work-video, .main-workp-video, .vertical-video',
 }
 
-const MAX_LOAD_IMAGES = 10
+const MAX_LOAD_IMAGES = 24
 const IMAGE_LOAD_TIMEOUT = 3500
 
 let hasPlayed = false
