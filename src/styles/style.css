@@ -159,6 +159,25 @@ body {
 
 
 
+  [data-a="rounded"]{
+    mask-image: paint(smooth-corners);
+    -webkit-mask-image: paint(smooth-corners);
+    --smooth-corners: 30;
+  }
+  
+  [data-a="rounded-l"]{
+    mask-image: paint(smooth-corners);
+    -webkit-mask-image: paint(smooth-corners);
+    --smooth-corners: 34;
+  }
+  
+  [data-a="rounded-m"]{
+    mask-image: paint(smooth-corners);
+    -webkit-mask-image: paint(smooth-corners);
+    --smooth-corners: 24;
+  }
+
+
 
 
 

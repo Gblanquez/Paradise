@@ -12,6 +12,9 @@ const SELECTORS = {
   playToggle: '[data-c="play-toggle"]',
 }
 
+const VIDEO_MASK_RADIUS = '0.8rem'
+const VIDEO_MASK_CLIP = 'inset(var(--mask-y) var(--mask-x) var(--mask-y) var(--mask-x) round var(--mask-radius))'
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
@@ -246,9 +249,13 @@ function createInfoVideo(video, root, pauseOthers) {
 
   if (videoContainer) {
     gsap.set(videoContainer, {
+      overflow: 'hidden',
+      '--mask-x': '50%',
+      '--mask-y': '50%',
+      '--mask-radius': VIDEO_MASK_RADIUS,
       scale: 1.2,
       rotation: -20,
-      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+      clipPath: VIDEO_MASK_CLIP,
       transformOrigin: 'center center',
       willChange: 'clip-path, transform',
     })
@@ -258,9 +265,11 @@ function createInfoVideo(video, root, pauseOthers) {
         if (isDestroyed || revealTween) return
 
         revealTween = gsap.to(videoContainer, {
+          '--mask-x': '0%',
+          '--mask-y': '0%',
+          '--mask-radius': '0rem',
           scale: 1,
           rotation: 0,
-          clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
           duration: 1.4,
           ease: 'power3.inOut',
           scrollTrigger: {
@@ -299,7 +308,7 @@ function createInfoVideo(video, root, pauseOthers) {
       gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
       gsap.set(playToggleParent, { clearProps: 'opacity' })
       if (videoContainer) {
-        gsap.set(videoContainer, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
+        gsap.set(videoContainer, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange,--mask-x,--mask-y,--mask-radius' })
       }
     },
   }

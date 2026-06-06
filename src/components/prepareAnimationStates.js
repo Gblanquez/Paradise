@@ -1,5 +1,9 @@
 import { gsap } from 'gsap'
 
+const IMAGE_MASK_RADIUS = '0.8rem'
+const HERO_VIDEO_MASK_RADIUS = '0.8rem'
+const CENTER_ROUNDED_MASK = 'inset(var(--mask-y) var(--mask-x) var(--mask-y) var(--mask-x) round var(--mask-radius))'
+
 export function prepareAnimationStates(root = document) {
   const textRevealTargets = gsap.utils.toArray('[data-a="title-text"], [data-a="body-text"]', root)
   const lines = gsap.utils.toArray('.line', root)
@@ -21,9 +25,13 @@ export function prepareAnimationStates(root = document) {
 
   if (heroVideoMasks.length) {
     gsap.set(heroVideoMasks, {
+      overflow: 'hidden',
+      '--mask-x': '50%',
+      '--mask-y': '50%',
+      '--mask-radius': HERO_VIDEO_MASK_RADIUS,
       scale: 1.2,
       rotation: -20,
-      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+      clipPath: CENTER_ROUNDED_MASK,
       transformOrigin: 'center center',
     })
   }
@@ -35,7 +43,10 @@ export function prepareAnimationStates(root = document) {
     if (imgWrapper) {
       gsap.set(imgWrapper, {
         overflow: 'hidden',
-        clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+        '--mask-x': '50%',
+        '--mask-y': '50%',
+        '--mask-radius': IMAGE_MASK_RADIUS,
+        clipPath: CENTER_ROUNDED_MASK,
         transformOrigin: '50% 50%',
       })
     }

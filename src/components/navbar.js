@@ -44,6 +44,14 @@ const GRADIENT = `linear-gradient(
 
 const CLOSE_CIRCLE_PATH = 'M15.2 7.5C15.2 11.4765 11.9765 14.7 8 14.7C4.02355 14.7 0.8 11.4765 0.8 7.5C0.8 3.52355 4.02355 0.3 8 0.3C11.9765 0.3 15.2 3.52355 15.2 7.5Z'
 
+function getNavBoxRotation(box) {
+  return box.classList.contains('nav-box-one') ? -45 : 45
+}
+
+function getNavBoxOrigin(box) {
+  return box.classList.contains('nav-box-one') ? 'right bottom' : 'left bottom'
+}
+
 export function prepareNavbarView(root = document) {
   const boxes = gsap.utils.toArray(SELECTORS.viewBox, root)
 
@@ -147,8 +155,8 @@ export function initNavbar(root = document) {
   gsap.set(navBoxes, {
     y: '0%',
     yPercent: 110,
-    rotation: 45,
-    transformOrigin: 'left bottom',
+    rotation: (index, box) => getNavBoxRotation(box),
+    transformOrigin: (index, box) => getNavBoxOrigin(box),
   })
   gsap.set(navLinks, { opacity: 0 })
   gsap.set(navOp, {
@@ -471,8 +479,8 @@ export function initNavbar(root = document) {
     gsap.set(navBoxes, {
       y: '0%',
       yPercent: 110,
-      rotation: 45,
-      transformOrigin: 'left bottom',
+      rotation: (index, box) => getNavBoxRotation(box),
+      transformOrigin: (index, box) => getNavBoxOrigin(box),
     })
 
     activeTween?.kill()
@@ -548,8 +556,8 @@ export function initNavbar(root = document) {
           gsap.set(navBoxes, {
             y: '0%',
             yPercent: 110,
-            rotation: 45,
-            transformOrigin: 'left bottom',
+            rotation: (index, box) => getNavBoxRotation(box),
+            transformOrigin: (index, box) => getNavBoxOrigin(box),
           })
           gsap.set(navLinks, { opacity: 0 })
           gsap.set(navOp, {
@@ -663,7 +671,7 @@ export function initNavbar(root = document) {
         }, 0)
         .to(navBoxesOut, {
           y: '110%',
-          rotation: 45,
+          rotation: (index, box) => getNavBoxRotation(box),
           duration: 0.58,
           ease: 'power3.inOut',
           stagger: 0.07,

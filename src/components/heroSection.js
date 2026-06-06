@@ -13,6 +13,9 @@ const SELECTORS = {
   move: '[data-a="hero-move"]',
 }
 
+const VIDEO_MASK_RADIUS = '0.8rem'
+const VIDEO_MASK_CLIP = 'inset(var(--mask-y) var(--mask-x) var(--mask-y) var(--mask-x) round var(--mask-radius))'
+
 function playVideo(video) {
   if (!video) return
 
@@ -49,9 +52,13 @@ export function initHeroSection(root = document, options = {}) {
     const video = mask.querySelector(SELECTORS.video) || root.querySelector(SELECTORS.video)
 
     gsap.set(mask, {
+      overflow: 'hidden',
+      '--mask-x': '50%',
+      '--mask-y': '50%',
+      '--mask-radius': VIDEO_MASK_RADIUS,
       scale: 1.2,
       rotation: -20,
-      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+      clipPath: VIDEO_MASK_CLIP,
       transformOrigin: 'center center',
       willChange: 'clip-path, transform',
     })
@@ -68,7 +75,9 @@ export function initHeroSection(root = document, options = {}) {
     tl.to(mask, {
       scale: 1,
       rotation: 0,
-      clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+      '--mask-x': '0%',
+      '--mask-y': '0%',
+      '--mask-radius': '0rem',
       duration: 1.2,
       ease: 'power3.inOut',
       onComplete: () => playVideo(video),
@@ -141,7 +150,7 @@ export function initHeroSection(root = document, options = {}) {
     scrubTimeline?.scrollTrigger?.kill()
     scrubTimeline?.kill()
     pinTrigger?.kill()
-    gsap.set(videoMasks, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
+    gsap.set(videoMasks, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange,--mask-x,--mask-y,--mask-radius' })
     gsap.set([...videoParents, ...moveItems], { clearProps: 'transform' })
   }
 }

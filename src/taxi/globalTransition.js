@@ -18,6 +18,14 @@ function getTransitionElements() {
   return { parent, boxes }
 }
 
+function getBoxRotation(box) {
+  return box.classList.contains('transition-box-one') ? -45 : 45
+}
+
+function getBoxOrigin(box) {
+  return box.classList.contains('transition-box-one') ? 'right bottom' : 'left bottom'
+}
+
 export default class globalTransition extends Transition {
   /**
    * Handle the transition leaving the previous page.
@@ -41,8 +49,8 @@ export default class globalTransition extends Transition {
     })
     gsap.set(boxes, {
       yPercent: 110,
-      rotation: 45,
-      transformOrigin: 'left bottom',
+      rotation: (index, box) => getBoxRotation(box),
+      transformOrigin: (index, box) => getBoxOrigin(box),
     })
 
     gsap.to(boxes, {
@@ -89,7 +97,7 @@ export default class globalTransition extends Transition {
     gsap.set(boxes, {
       yPercent: 0,
       rotation: 0,
-      transformOrigin: 'left bottom',
+      transformOrigin: (index, box) => getBoxOrigin(box),
     })
 
     gsap.to(parent, {
@@ -106,7 +114,7 @@ export default class globalTransition extends Transition {
         })
         gsap.set(boxes, {
           yPercent: 110,
-          rotation: 45,
+          rotation: (index, box) => getBoxRotation(box),
           clearProps: 'transformOrigin',
         })
         lenis.start()

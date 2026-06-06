@@ -3,6 +3,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+const MASK_RADIUS = '0.8rem'
+const MASK_CLIP = 'inset(var(--mask-y) var(--mask-x) var(--mask-y) var(--mask-x) round var(--mask-radius))'
+
 export default function imagesAnimation(root = document) {
   const imgTrigger = gsap.utils.toArray('[data-a="trigger"]', root)
   const triggers = []
@@ -18,7 +21,10 @@ export default function imagesAnimation(root = document) {
 
     gsap.set(imgWrapper, {
       overflow: 'hidden',
-      clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)',
+      '--mask-x': '50%',
+      '--mask-y': '50%',
+      '--mask-radius': MASK_RADIUS,
+      clipPath: MASK_CLIP,
       transformOrigin: '50% 50%',
       willChange: 'clip-path, transform',
     })
@@ -40,7 +46,9 @@ export default function imagesAnimation(root = document) {
     const tl = gsap.timeline({ scrollTrigger })
 
     tl.to(imgWrapper, {
-      clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+      '--mask-x': '0%',
+      '--mask-y': '0%',
+      '--mask-radius': '0rem',
       duration: 2.4,
       ease: 'power4.out',
     }, 0)
@@ -89,7 +97,7 @@ export default function imagesAnimation(root = document) {
       const imgItem = trigger.querySelector('[data-a="scale"]')
 
       if (imgWrapper) {
-        gsap.set(imgWrapper, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange' })
+        gsap.set(imgWrapper, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange,--mask-x,--mask-y,--mask-radius' })
       }
       if (imgItem) {
         gsap.set(imgItem, { clearProps: 'transform,willChange,transformOrigin' })
