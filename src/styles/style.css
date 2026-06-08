@@ -150,6 +150,11 @@ body {
         line-height: 1.1;
       }
 
+      .sub-body.large {
+        font-size: 2rem !important;
+        line-height: 1.1;
+      }
+
   
     .title {
       font-size: clamp(3rem, 12.9167vw, 3.875rem);
