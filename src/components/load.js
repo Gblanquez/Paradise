@@ -14,7 +14,7 @@ const SELECTORS = {
   svgWrap: '.load-svg-wrap',
   logoPath: '.logo-svg path',
   images: '.img',
-  reelVideo: '.reel-vdeo, .reel-video',
+  videos: '.reel-vdeo, .reel-video',
 }
 
 const MAX_LOAD_IMAGES = 24
@@ -228,7 +228,12 @@ function waitForLoadReady(videos, images, onProgress) {
   ])
 }
 
-export function initLoadAnimation(root = document) {
+function getUniqueElements(selector, root) {
+  return gsap.utils.toArray(selector, root)
+    .filter((item, index, array) => array.indexOf(item) === index)
+}
+
+export function initLoadAnimation(root = document, options = {}) {
   if (hasPlayed) {
     const pageMain = root.querySelector(SELECTORS.pageMain) || document.querySelector(SELECTORS.pageMain)
 
@@ -267,8 +272,8 @@ export function initLoadAnimation(root = document) {
   const lineElements = [line, progressLine].filter(Boolean).filter((item, index, array) => array.indexOf(item) === index)
   const svgWrap = parent.querySelector(SELECTORS.svgWrap)
   const logoPaths = gsap.utils.toArray(SELECTORS.logoPath, parent)
-  const reelVideo = root.querySelector(SELECTORS.reelVideo)
-  const videos = reelVideo ? [reelVideo] : []
+  const videoSelector = options.videoSelector || SELECTORS.videos
+  const videos = getUniqueElements(videoSelector, root)
   const images = gsap.utils.toArray(SELECTORS.images, root).slice(0, MAX_LOAD_IMAGES)
   const splits = []
   const lines = []

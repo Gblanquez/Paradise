@@ -61,7 +61,9 @@ export default class workRender extends Renderer {
     this.destroyReel = initReel(document).destroy
     this.destroyCta = initCta(this.content)
     this.destroyLinkHover = initLinkHover(this.content)
-    this.destroyLoadAnimation = initLoadAnimation(this.content)
+    this.destroyLoadAnimation = initLoadAnimation(this.content, {
+      videoSelector: '.reel-vdeo, .reel-video, .info-video, .vertical-video',
+    })
     this.destroyFooter = initFooter(this.content)
     this.destroyInfoCarrousel = initInfoCarrousel(this.content)
 
