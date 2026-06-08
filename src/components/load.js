@@ -14,7 +14,7 @@ const SELECTORS = {
   svgWrap: '.load-svg-wrap',
   logoPath: '.logo-svg path',
   images: '.img',
-  videos: '.reel-video, .info-video, .main-work-video, .main-workp-video, .vertical-video',
+  reelVideo: '.reel-vdeo, .reel-video',
 }
 
 const MAX_LOAD_IMAGES = 24
@@ -219,7 +219,8 @@ export function initLoadAnimation(root = document) {
   const lineElements = [line, progressLine].filter(Boolean).filter((item, index, array) => array.indexOf(item) === index)
   const svgWrap = parent.querySelector(SELECTORS.svgWrap)
   const logoPaths = gsap.utils.toArray(SELECTORS.logoPath, parent)
-  const videos = []
+  const reelVideo = root.querySelector(SELECTORS.reelVideo)
+  const videos = reelVideo ? [reelVideo] : []
   const images = gsap.utils.toArray(SELECTORS.images, root).slice(0, MAX_LOAD_IMAGES)
   const splits = []
   const lines = []
@@ -324,7 +325,6 @@ export function initLoadAnimation(root = document) {
         if (pageMain) {
           gsap.set(pageMain, { opacity: 1 })
         }
-        completeLoad()
 
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -346,6 +346,7 @@ export function initLoadAnimation(root = document) {
                 })
                 gsap.set(parent, { clearProps: 'backgroundColor' })
                 cleanup()
+                completeLoad()
               },
             })
           })
