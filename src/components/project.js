@@ -9,6 +9,8 @@ const SELECTORS = {
   item: '.wk-collection-item',
   link: '.wk-link',
   frame: '.ft-project-parent',
+  maskProject: '[data-a="mask-project"]',
+  scaleProject: '[data-a="scale"]',
   cText: '[data-a="c-text"]',
   category: '[data-category]',
   allCategory: '[data="all-category"]',
@@ -88,6 +90,8 @@ export function initProjectList(root = document) {
   const list = root.querySelector(SELECTORS.list) || links[0].closest(SELECTORS.list)
   const items = links.map((link) => link.closest(SELECTORS.item) || link)
   const frames = items.map((item) => item.querySelector(SELECTORS.frame))
+  const projectMasks = items.map((item) => item.querySelector(SELECTORS.maskProject)).filter(Boolean)
+  const projectScales = items.map((item) => item.querySelector(SELECTORS.scaleProject)).filter(Boolean)
   const flipTargets = [...items, ...frames.filter(Boolean)]
   const cTextGroups = items.map((item) => gsap.utils.toArray(SELECTORS.cText, item))
   const originalTabIndexes = links.map((link) => link.getAttribute('tabindex'))
@@ -315,12 +319,34 @@ export function initProjectList(root = document) {
     })
   }
 
+  const revealProjectMasks = (immediate = false) => {
+    gsap.to(projectMasks, {
+      '--mask-x': '0%',
+      '--mask-y': '0%',
+      '--mask-radius': '0rem',
+      duration: immediate ? 0 : 0.45,
+      ease: 'power3.out',
+      overwrite: true,
+    })
+
+    gsap.to(projectScales, {
+      scale: 1,
+      duration: immediate ? 0 : 0.45,
+      ease: 'power3.out',
+      overwrite: true,
+    })
+  }
+
   const setCategoryState = (category, immediate = false) => {
     const nextCategory = category || 'all'
 
     if (!immediate && nextCategory === activeCategory) return
 
     activeFlip?.kill()
+    if (!immediate) {
+      revealProjectMasks()
+    }
+
     const currentListHeight = list?.getBoundingClientRect().height || 0
     const state = !immediate ? Flip.getState(flipTargets) : null
     const { activeTexts, inactiveTexts } = getCategoryTexts(nextCategory)
