@@ -92,6 +92,7 @@ export function initAboutSection(root = document) {
   let imageTimeline = null
   let logoTimeline = null
   let resizeTimeout = null
+  let lastWindowWidth = window.innerWidth
 
   if (imageWraps.length) {
     gsap.set(imageWraps, {
@@ -158,6 +159,11 @@ export function initAboutSection(root = document) {
   }
 
   const handleResize = () => {
+    const nextWindowWidth = window.innerWidth
+
+    if (nextWindowWidth === lastWindowWidth) return
+
+    lastWindowWidth = nextWindowWidth
     window.clearTimeout(resizeTimeout)
     resizeTimeout = window.setTimeout(refreshLogoLoop, 150)
   }
