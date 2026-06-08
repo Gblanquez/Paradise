@@ -23,7 +23,7 @@ const GRADIENT = `linear-gradient(
   #2e8ef7 100%
 )`
 
-const FONT_WAIT_TIMEOUT = 2500
+const FONT_WAIT_TIMEOUT = 1000
 
 let activeCleanup = () => {}
 

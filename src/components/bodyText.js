@@ -4,7 +4,7 @@ import { SplitText } from 'gsap/SplitText'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
-const FONT_WAIT_TIMEOUT = 2500
+const FONT_WAIT_TIMEOUT = 1000
 
 export default function bodyTextReveal(root = document) {
   const targets = gsap.utils.toArray('[data-a="body-text"]', root)

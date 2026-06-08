@@ -14,10 +14,10 @@ const SELECTORS = {
   svgWrap: '.load-svg-wrap',
   logoPath: '.logo-svg path',
   images: '.img',
-  videos: '.reel-vdeo, .reel-video',
+  videos: '.reel-video',
 }
 
-const MAX_LOAD_IMAGES = 24
+const MAX_LOAD_IMAGES = 12
 const IMAGE_LOAD_TIMEOUT = 3500
 const FONT_LOAD_TIMEOUT = 6000
 
