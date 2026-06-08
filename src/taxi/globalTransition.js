@@ -26,6 +26,13 @@ function getBoxOrigin(box) {
   return box.classList.contains('transition-box-one') ? 'right bottom' : 'left bottom'
 }
 
+function unlockPageScroll() {
+  document.body.style.removeProperty('overflow')
+  document.documentElement.style.removeProperty('overflow')
+  lenis.start()
+  lenis.resize()
+}
+
 export default class globalTransition extends Transition {
   /**
    * Handle the transition leaving the previous page.
@@ -35,7 +42,7 @@ export default class globalTransition extends Transition {
     const { parent, boxes } = getTransitionElements()
 
     if (!parent || !boxes.length) {
-      lenis.start()
+      unlockPageScroll()
       done()
       return
     }
@@ -83,6 +90,7 @@ export default class globalTransition extends Transition {
     window.scrollTo(0, 0)
 
     if (!parent || !boxes.length) {
+      unlockPageScroll()
       done()
       return
     }
@@ -117,7 +125,7 @@ export default class globalTransition extends Transition {
           rotation: (index, box) => getBoxRotation(box),
           clearProps: 'transformOrigin',
         })
-        lenis.start()
+        unlockPageScroll()
         done()
       },
     })

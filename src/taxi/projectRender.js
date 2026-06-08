@@ -83,6 +83,10 @@ export default class projectRender extends Renderer {
 
   onEnterCompleted() {
     ensureFooterSticky(this.content)
+    document.body.style.removeProperty('overflow')
+    document.documentElement.style.removeProperty('overflow')
+    lenis.start()
+    lenis.resize()
     window.dispatchEvent(new CustomEvent('page:entered'))
 
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
