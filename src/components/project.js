@@ -14,6 +14,7 @@ const SELECTORS = {
   allCategory: '[data="all-category"]',
   categoryItem: '.category-list-item',
   categoryLine: '.category-line',
+  mobileInactive: '[data-a="mob-inactive"]',
 }
 
 const FILTERED_FRAME_SIZES = {
@@ -26,6 +27,8 @@ const FILTERED_FRAME_SIZES = {
     height: '6vw',
   },
 }
+
+const MOBILE_FILTER_QUERY = '(max-width: 780px)'
 
 function normalizeCategory(text) {
   return text.replace(/\s+/g, ' ').trim().toLowerCase()
@@ -77,6 +80,7 @@ function notifyProjectsLayoutReady() {
 
 export function initProjectList(root = document) {
   const supportsHover = canUseHover()
+  const mobileFilterMedia = window.matchMedia(MOBILE_FILTER_QUERY)
   const links = gsap.utils.toArray(SELECTORS.link, root)
 
   if (!links.length) return () => {}
@@ -86,6 +90,7 @@ export function initProjectList(root = document) {
   const frames = items.map((item) => item.querySelector(SELECTORS.frame))
   const flipTargets = [...items, ...frames.filter(Boolean)]
   const cTextGroups = items.map((item) => gsap.utils.toArray(SELECTORS.cText, item))
+  const originalTabIndexes = links.map((link) => link.getAttribute('tabindex'))
   const linkCategories = links.map((link, index) => (
     getCategoryValue(link)
     || getCategoryValue(items[index])
@@ -118,6 +123,41 @@ export function initProjectList(root = document) {
   let activeCategory = 'all'
   let activeFlip = null
 
+  const isMobileFilterLayout = () => mobileFilterMedia.matches
+
+  const moveItemToList = (item, index) => {
+    if (!list) return
+
+    const nextItem = items
+      .slice(index + 1)
+      .find((candidate) => candidate.parentElement === list)
+
+    list.insertBefore(item, nextItem || null)
+  }
+
+  const handleFilterBreakpointChange = () => {
+    applyCategoryLayout(activeCategory)
+    notifyProjectsLayoutReady()
+  }
+
+  const setLinkInteractive = (link, isInteractive) => {
+    link.setAttribute('aria-disabled', String(!isInteractive))
+
+    if (isInteractive) {
+      link.style.removeProperty('pointer-events')
+      const originalTabIndex = originalTabIndexes[links.indexOf(link)]
+
+      if (originalTabIndex === null) {
+        link.removeAttribute('tabindex')
+      } else {
+        link.setAttribute('tabindex', originalTabIndex)
+      }
+    } else {
+      link.style.pointerEvents = 'none'
+      link.setAttribute('tabindex', '-1')
+    }
+  }
+
   const applyCategoryLayout = (category) => {
     const isAll = category === 'all'
     let activeIndex = 0
@@ -125,9 +165,21 @@ export function initProjectList(root = document) {
     if (list) {
       list.classList.toggle('is-filtered', !isAll)
       if (isAll) {
+        list.style.removeProperty('display')
         list.style.removeProperty('grid-template-columns')
+        list.style.removeProperty('column-gap')
       } else {
-        list.style.gridTemplateColumns = 'repeat(16, 1fr)'
+        const isMobile = isMobileFilterLayout()
+
+        list.style.display = 'grid'
+        list.style.gridTemplateColumns = isMobile
+          ? 'repeat(6, minmax(0, 1fr))'
+          : 'repeat(16, minmax(0, 1fr))'
+        if (isMobile) {
+          list.style.columnGap = '1rem'
+        } else {
+          list.style.removeProperty('column-gap')
+        }
       }
     }
 
@@ -135,43 +187,78 @@ export function initProjectList(root = document) {
       const isActive = isAll || linkCategories[index] === category
       const item = items[index]
       const frame = frames[index]
+      const isMobile = isMobileFilterLayout()
 
       if (isAll) {
+        moveItemToList(item, index)
+        setLinkInteractive(link, true)
         item.classList.remove('is-active', 'is-inactive')
+        item.style.removeProperty('pointer-events')
         item.style.removeProperty('grid-column')
         item.style.removeProperty('grid-row')
         item.style.removeProperty('z-index')
+        item.style.removeProperty('min-width')
         frame?.style.removeProperty('width')
         frame?.style.removeProperty('height')
         return
       }
 
       if (isActive) {
-        const row = Math.floor(activeIndex / 2) + 1
-        const columnStart = activeIndex % 2 === 0 ? 1 : 6
+        moveItemToList(item, index)
+        setLinkInteractive(link, true)
+        const row = isMobile ? activeIndex + 1 : Math.floor(activeIndex / 2) + 1
+        const columnStart = isMobile
+          ? 1
+          : (activeIndex % 2 === 0 ? 1 : 6)
+        const columnSpan = isMobile ? 5 : 5
 
         activeIndex += 1
 
-        item.style.gridColumn = `${columnStart} / span 5`
+        item.style.gridColumn = isMobile
+          ? '1 / 6'
+          : `${columnStart} / span ${columnSpan}`
         item.style.gridRow = String(row)
         item.style.zIndex = '2'
+        item.style.minWidth = '0'
+        item.style.removeProperty('pointer-events')
         item.classList.add('is-active')
         item.classList.remove('is-inactive')
         if (frame) {
-          frame.style.width = FILTERED_FRAME_SIZES.active.width
-          frame.style.height = FILTERED_FRAME_SIZES.active.height
+          if (isMobile) {
+            frame.style.removeProperty('width')
+            frame.style.height = '18rem'
+          } else {
+            frame.style.width = FILTERED_FRAME_SIZES.active.width
+            frame.style.height = FILTERED_FRAME_SIZES.active.height
+          }
         }
         return
       }
 
-      item.style.gridColumn = '14 / 16'
-      item.style.gridRow = '1'
+      if (isMobile) {
+        moveItemToList(item, index)
+        item.style.gridColumn = '6 / 7'
+        item.style.gridRow = '1'
+      } else {
+        moveItemToList(item, index)
+        item.style.gridColumn = '14 / 16'
+        item.style.gridRow = '1'
+      }
+
       item.style.zIndex = '1'
+      item.style.minWidth = '0'
+      item.style.pointerEvents = 'none'
+      setLinkInteractive(link, false)
       item.classList.add('is-inactive')
       item.classList.remove('is-active')
       if (frame) {
-        frame.style.width = FILTERED_FRAME_SIZES.inactive.width
-        frame.style.height = FILTERED_FRAME_SIZES.inactive.height
+        if (isMobile) {
+          frame.style.removeProperty('width')
+          frame.style.height = '4rem'
+        } else {
+          frame.style.width = FILTERED_FRAME_SIZES.inactive.width
+          frame.style.height = FILTERED_FRAME_SIZES.inactive.height
+        }
       }
     })
   }
@@ -374,22 +461,29 @@ export function initProjectList(root = document) {
   })
 
   setCategoryState('all', true)
+  mobileFilterMedia.addEventListener?.('change', handleFilterBreakpointChange)
 
   return () => {
     activeFlip?.kill()
+    mobileFilterMedia.removeEventListener?.('change', handleFilterBreakpointChange)
     removeCategoryListeners.forEach((remove) => remove())
     categoryButtons.forEach((button) => {
       button.classList.remove('is-active')
       button.removeAttribute('aria-pressed')
     })
     list?.classList.remove('is-filtered')
+    list?.style.removeProperty('display')
     list?.style.removeProperty('grid-template-columns')
+    list?.style.removeProperty('column-gap')
     list?.style.removeProperty('min-height')
     items.forEach((item, index) => {
+      moveItemToList(item, index)
+      setLinkInteractive(links[index], true)
       item.classList.remove('is-active', 'is-inactive')
       item.style.removeProperty('grid-column')
       item.style.removeProperty('grid-row')
       item.style.removeProperty('z-index')
+      item.style.removeProperty('min-width')
       frames[index]?.style.removeProperty('width')
       frames[index]?.style.removeProperty('height')
     })

@@ -1,6 +1,7 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { addScrollListener } from './scroll.js'
+import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -17,32 +18,12 @@ export function initShowcaseSection(root = document) {
     || root.querySelector(SELECTORS.imageFrame)
     || document.querySelector(SELECTORS.imageFrame)
   const imageContainer = spacer?.querySelector(SELECTORS.imageContainer)
-    || imageFrame?.querySelector(SELECTORS.imageContainer)
     || root.querySelector(SELECTORS.imageContainer)
     || document.querySelector(SELECTORS.imageContainer)
-  const images = imageContainer ? Array.from(imageContainer.querySelectorAll(SELECTORS.image)) : []
+  const images = imageContainer ? gsap.utils.toArray(SELECTORS.image, imageContainer) : []
+  const supportsHover = canUseHover()
 
   if (!spacer || !imageFrame) return () => {}
-
-  if (images.length > 1) {
-    gsap.set(imageContainer, { position: 'relative' })
-    gsap.set(images, {
-      position: 'absolute',
-      inset: 0,
-      width: '100%',
-      height: '100%',
-      display: 'none',
-      zIndex: 0,
-    })
-    gsap.set(images[0], { clearProps: 'display', zIndex: 3 })
-  }
-
-  if (imageContainer) {
-    gsap.set(imageContainer, {
-      y: '-60%',
-      willChange: 'transform',
-    })
-  }
 
   gsap.set(imageFrame, {
     clipPath: 'polygon(15% 0%, 85% 0%, 85% 100%, 15% 100%)',
@@ -66,39 +47,120 @@ export function initShowcaseSection(root = document) {
     ease: 'none',
   }, 0)
 
-  if (imageContainer) {
-    movementTl.to(imageContainer, { y: '80%', ease: 'none' }, 0)
+  let imageIndex = 0
+  let zIndex = 1
+  let lastX = 0
+  let lastY = 0
+  let lastTime = 0
+  let isPointerInside = false
+  let imageWidth = 0
+  let imageHeight = 0
+  const minStampDistance = 110
+  const minStampDelay = 120
+
+  const measureTrail = () => {
+    if (!imageContainer || !images.length) return
+
+    const containerRect = imageContainer.getBoundingClientRect()
+    const imageRect = images[0].getBoundingClientRect()
+
+    imageWidth = imageRect.width || containerRect.width
+    imageHeight = imageRect.height || containerRect.height
   }
 
-  let imageTrigger = null
+  const showTrailImage = (event) => {
+    if (!images.length || !imageWidth || !imageHeight) return
 
-  if (images.length > 1) {
-    const setActiveImage = (activeIndex) => {
-      images.forEach((image, index) => {
-        gsap.set(image, {
-          display: index === activeIndex ? '' : 'none',
-          zIndex: index === activeIndex ? images.length + index : index,
-        })
-      })
-    }
+    const now = performance.now()
+    const distance = Math.hypot(event.clientX - lastX, event.clientY - lastY)
 
-    setActiveImage(0)
+    if (now - lastTime < minStampDelay && distance < minStampDistance) return
 
-    imageTrigger = ScrollTrigger.create({
-      trigger: spacer,
-      start: 'top 30%',
-      end: 'bottom 50%',
-      scrub: true,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const activeIndex = Math.min(
-          images.length - 1,
-          Math.floor(self.progress * images.length)
-        )
+    lastX = event.clientX
+    lastY = event.clientY
+    lastTime = now
 
-        setActiveImage(activeIndex)
+    const containerRect = imageContainer.getBoundingClientRect()
+    const image = images[imageIndex]
+    const x = event.clientX - containerRect.left - imageWidth / 2
+    const y = event.clientY - containerRect.top - imageHeight / 2
+
+    imageIndex = (imageIndex + 1) % images.length
+    zIndex += 1
+
+    gsap.killTweensOf(image)
+    gsap.set(image, {
+      x,
+      y,
+      zIndex,
+      willChange: 'transform, opacity',
+    })
+
+    gsap.timeline({
+      onComplete: () => {
+        gsap.set(image, { clearProps: 'willChange' })
       },
     })
+      .fromTo(image, {
+        opacity: 0,
+        scale: 0.1,
+        rotate: gsap.utils.random(-3, 3),
+      }, {
+        opacity: 1,
+        scale: 1,
+        rotate: gsap.utils.random(-1, 1),
+        duration: 0.78,
+        ease: 'expo.out',
+      }, 0)
+      .to(image, {
+        opacity: 0,
+        scale: 0.1,
+        duration: 1.45,
+        ease: 'power2.inOut',
+      }, 1)
+  }
+
+  const handlePointerEnter = (event) => {
+    isPointerInside = true
+    measureTrail()
+    showTrailImage(event)
+  }
+
+  const handlePointerMove = (event) => {
+    if (!isPointerInside) return
+
+    showTrailImage(event)
+  }
+
+  const handlePointerLeave = () => {
+    isPointerInside = false
+    gsap.to(images, {
+      opacity: 0,
+      duration: 0.25,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
+  if (supportsHover && imageContainer && images.length) {
+    gsap.set(imageContainer, {
+      pointerEvents: 'none',
+      overflow: 'visible',
+    })
+
+    gsap.set(images, {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      opacity: 0,
+      pointerEvents: 'none',
+      transformOrigin: 'center center',
+    })
+
+    measureTrail()
+    spacer.addEventListener('pointerenter', handlePointerEnter)
+    spacer.addEventListener('pointermove', handlePointerMove)
+    spacer.addEventListener('pointerleave', handlePointerLeave)
   }
 
   const removeScrollListener = addScrollListener(() => ScrollTrigger.update())
@@ -108,9 +170,11 @@ export function initShowcaseSection(root = document) {
     removeScrollListener()
     movementTl.scrollTrigger?.kill()
     movementTl.kill()
-    imageTrigger?.kill()
+    spacer.removeEventListener('pointerenter', handlePointerEnter)
+    spacer.removeEventListener('pointermove', handlePointerMove)
+    spacer.removeEventListener('pointerleave', handlePointerLeave)
     gsap.set(imageFrame, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
-    gsap.set(imageContainer, { clearProps: 'position,transform,willChange' })
-    gsap.set(images, { clearProps: 'position,inset,width,height,display,zIndex' })
+    gsap.set(imageContainer, { clearProps: 'pointerEvents,overflow' })
+    gsap.set(images, { clearProps: 'position,left,top,opacity,transform,transformOrigin,zIndex,pointerEvents,willChange' })
   }
 }
