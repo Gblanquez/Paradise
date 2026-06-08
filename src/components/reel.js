@@ -359,7 +359,9 @@ export function initReel(root = document) {
       opacity: 0,
     })
 
-    const loadPromise = loadVideo()
+    await loadVideo()
+
+    if (!isOpen || activeElements?.video !== video) return
 
     activeTween = gsap.timeline()
       .to(child, {
@@ -393,8 +395,6 @@ export function initReel(root = document) {
         ease: 'power3.out',
         overwrite: true,
       }, 0.72)
-
-    await loadPromise
 
     if (video && line) {
       playWithSound()
