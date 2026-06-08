@@ -19,6 +19,7 @@ const SELECTORS = {
 
 const MAX_LOAD_IMAGES = 24
 const IMAGE_LOAD_TIMEOUT = 3500
+const FONT_LOAD_TIMEOUT = 6000
 
 let hasPlayed = false
 let loadComplete = false
@@ -144,6 +145,31 @@ function waitForImage(image, onProgress) {
   })
 }
 
+function waitForFonts(onProgress) {
+  return new Promise((resolve) => {
+    let timeout = null
+
+    const complete = () => {
+      if (timeout) {
+        window.clearTimeout(timeout)
+      }
+
+      onProgress(1)
+      resolve()
+    }
+
+    onProgress(0)
+
+    if (!document.fonts?.ready) {
+      complete()
+      return
+    }
+
+    timeout = window.setTimeout(complete, FONT_LOAD_TIMEOUT)
+    document.fonts.ready.then(complete).catch(complete)
+  })
+}
+
 function waitForAssets(videos, images, onProgress) {
   const assets = [...videos, ...images]
 
@@ -178,6 +204,28 @@ function waitForAssets(videos, images, onProgress) {
       updateTotal()
     })
   }))
+}
+
+function waitForLoadReady(videos, images, onProgress) {
+  let assetProgress = 0
+  let fontProgress = 0
+
+  const update = () => {
+    onProgress(assetProgress * 0.82 + fontProgress * 0.18)
+  }
+
+  update()
+
+  return Promise.all([
+    waitForAssets(videos, images, (progress) => {
+      assetProgress = progress
+      update()
+    }),
+    waitForFonts((progress) => {
+      fontProgress = progress
+      update()
+    }),
+  ])
 }
 
 export function initLoadAnimation(root = document) {
@@ -387,7 +435,7 @@ export function initLoadAnimation(root = document) {
 
   activeTween = gsap.timeline({
     onComplete: async () => {
-      await waitForAssets(videos, images, setProgress)
+      await waitForLoadReady(videos, images, setProgress)
 
       if (isDestroyed) return
 
