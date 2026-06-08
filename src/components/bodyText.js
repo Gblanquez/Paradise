@@ -4,6 +4,8 @@ import { SplitText } from 'gsap/SplitText'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
+const FONT_WAIT_TIMEOUT = 2500
+
 export default function bodyTextReveal(root = document) {
   const targets = gsap.utils.toArray('[data-a="body-text"]', root)
 
@@ -16,8 +18,14 @@ export default function bodyTextReveal(root = document) {
   const isMobile = window.matchMedia('(max-width: 768px)').matches
 
   const waitForFonts = () => {
-    if (document.fonts?.ready) return document.fonts.ready
-    return Promise.resolve()
+    if (!document.fonts?.ready) return Promise.resolve()
+
+    return Promise.race([
+      document.fonts.ready,
+      new Promise((resolve) => {
+        window.setTimeout(resolve, FONT_WAIT_TIMEOUT)
+      }),
+    ])
   }
 
   const cleanup = () => {
@@ -47,6 +55,11 @@ export default function bodyTextReveal(root = document) {
         autoSplit: true,
         mask: 'lines',
         onSplit: (self) => {
+          if (!self.lines.length) {
+            gsap.set(el, { autoAlpha: 1 })
+            return null
+          }
+
           gsap.set(self.lines, {
             yPercent: 100,
             willChange: 'transform',

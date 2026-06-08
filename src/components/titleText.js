@@ -23,6 +23,8 @@ const GRADIENT = `linear-gradient(
   #2e8ef7 100%
 )`
 
+const FONT_WAIT_TIMEOUT = 2500
+
 let activeCleanup = () => {}
 
 function createGradientLayer(char) {
@@ -65,8 +67,14 @@ export default function titleTextReveal(root = document) {
   let resizeTimer = null
 
   const waitForFonts = () => {
-    if (document.fonts?.ready) return document.fonts.ready
-    return Promise.resolve()
+    if (!document.fonts?.ready) return Promise.resolve()
+
+    return Promise.race([
+      document.fonts.ready,
+      new Promise((resolve) => {
+        window.setTimeout(resolve, FONT_WAIT_TIMEOUT)
+      }),
+    ])
   }
 
   const cleanup = () => {
@@ -96,6 +104,11 @@ export default function titleTextReveal(root = document) {
         mask: 'lines',
         onSplit: (self) => {
           const gradientLayers = self.chars.map(createGradientLayer).filter(Boolean)
+
+          if (!self.chars.length) {
+            gsap.set(el, { autoAlpha: 1 })
+            return null
+          }
 
           gsap.set(el, { autoAlpha: 1 })
           gsap.set(self.chars, {
