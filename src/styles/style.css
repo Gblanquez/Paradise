@@ -137,6 +137,13 @@ body {
       line-height: 0.9;
     }
 
+
+      
+    .subtitle.large {
+        font-size: 3rem !important;
+        line-height: 0.9;
+      }
+
       
     .sub-body {
         font-size: clamp(1.25rem, 5.4167vw, 1.625rem);
