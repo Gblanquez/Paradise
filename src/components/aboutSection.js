@@ -5,11 +5,16 @@ import { addScrollListener } from './scroll.js'
 gsap.registerPlugin(ScrollTrigger)
 
 const SELECTORS = {
-  section: '#about',
+  section: '[data-a="about-section"]',
   imageWrap: '[data-a="about-img-wrap"]',
   logoWrapper: '.clients-logo-wrapper',
   logoList: '.clients-logo-list',
   logoItem: '.clients-logo-item',
+}
+
+function waitForFonts() {
+  if (document.fonts?.ready) return document.fonts.ready
+  return Promise.resolve()
 }
 
 function horizontalLoop(items, config = {}) {
@@ -123,6 +128,17 @@ export function initAboutSection(root = document) {
 
     if (!logoItems.length) return
 
+    gsap.set(logoWrapper, {
+      overflow: 'hidden',
+    })
+
+    gsap.set(logoList, {
+      display: 'flex',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
+      willChange: 'transform',
+    })
+
     gsap.set(logoItems, {
       flexShrink: 0,
       willChange: 'transform',
@@ -134,12 +150,20 @@ export function initAboutSection(root = document) {
     })
   }
 
-  const handleResize = () => {
-    window.clearTimeout(resizeTimeout)
-    resizeTimeout = window.setTimeout(createLogoLoop, 150)
+  const refreshLogoLoop = () => {
+    requestAnimationFrame(() => {
+      createLogoLoop()
+      ScrollTrigger.refresh()
+    })
   }
 
-  createLogoLoop()
+  const handleResize = () => {
+    window.clearTimeout(resizeTimeout)
+    resizeTimeout = window.setTimeout(refreshLogoLoop, 150)
+  }
+
+  refreshLogoLoop()
+  waitForFonts().then(refreshLogoLoop)
   window.addEventListener('resize', handleResize)
 
   const removeScrollListener = addScrollListener(() => ScrollTrigger.update())
@@ -154,6 +178,8 @@ export function initAboutSection(root = document) {
     logoTimeline?.kill()
     gsap.set(imageWraps, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
     gsap.set(imageItems, { clearProps: 'transform' })
+    gsap.set(logoWrapper, { clearProps: 'overflow' })
+    gsap.set(logoList, { clearProps: 'display,flexWrap,alignItems,willChange,transform' })
     gsap.set(logoItems, { clearProps: 'x,xPercent,flexShrink,willChange' })
   }
 }
