@@ -2,6 +2,7 @@ import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { addScrollListener, lenis } from './scroll.js'
+import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(SplitText, ScrollTrigger)
 
@@ -94,6 +95,7 @@ export function initTalent(root = document) {
   const allContents = gsap.utils.toArray(SELECTORS.content, root)
   const boxWrappers = gsap.utils.toArray(SELECTORS.boxWrapper, root)
   const talentHoverItems = gsap.utils.toArray(SELECTORS.talentItem, root)
+  const supportsHover = canUseHover()
 
   if (!wrappers.length && !allTriggers.length && !allContents.length && !boxWrappers.length && !talentHoverItems.length) return () => {}
 
@@ -104,7 +106,7 @@ export function initTalent(root = document) {
   const revealTriggers = []
   const removeScrollListener = boxWrappers.length ? addScrollListener(() => ScrollTrigger.update()) : () => {}
 
-  const hoverInstances = talentHoverItems.map((item) => {
+  const hoverInstances = supportsHover ? talentHoverItems.map((item) => {
     const boxes = gsap.utils.toArray(SELECTORS.talentHoverBox, item)
 
     if (!boxes.length) return null
@@ -158,7 +160,7 @@ export function initTalent(root = document) {
         gsap.set(boxes, { clearProps: 'transform,transformOrigin' })
       },
     }
-  }).filter(Boolean)
+  }).filter(Boolean) : []
 
   const lockPageScroll = () => {
     if (isPageScrollLocked) return

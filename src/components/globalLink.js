@@ -1,4 +1,5 @@
 import gsap from 'gsap'
+import { canUseHover } from './hoverSupport.js'
 
 const SELECTORS = {
   link: '[data-a="global-link"]',
@@ -25,6 +26,11 @@ export function initGlobalLink(root = document) {
     width: '0%',
     height: '100%',
   })
+
+  if (!canUseHover()) return () => {
+    gsap.killTweensOf(allBoxes)
+    gsap.set(allBoxes, { clearProps: 'width,height' })
+  }
 
   const show = (boxes) => {
     gsap.to(boxes, {

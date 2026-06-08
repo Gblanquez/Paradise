@@ -3,6 +3,7 @@ import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin'
 import { addScrollListener, lenis } from './scroll.js'
+import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(SplitText, ScrollTrigger, MorphSVGPlugin)
 
@@ -112,6 +113,7 @@ function createGradientLayer(char) {
 }
 
 export function initNavbar(root = document) {
+  const supportsHover = canUseHover()
   const openToggle = root.querySelector(SELECTORS.openToggle) || document.querySelector(SELECTORS.openToggle)
   const closeToggle = root.querySelector(SELECTORS.closeToggle) || document.querySelector(SELECTORS.closeToggle)
   const contentParent = root.querySelector(SELECTORS.contentParent) || document.querySelector(SELECTORS.contentParent)
@@ -740,17 +742,21 @@ export function initNavbar(root = document) {
       })
     }
 
-    link.addEventListener('pointerenter', onEnter)
-    link.addEventListener('pointerleave', onLeave)
-    link.addEventListener('focus', onEnter)
-    link.addEventListener('blur', onLeave)
+    if (supportsHover) {
+      link.addEventListener('pointerenter', onEnter)
+      link.addEventListener('pointerleave', onLeave)
+      link.addEventListener('focus', onEnter)
+      link.addEventListener('blur', onLeave)
+    }
     link.addEventListener('click', onClick)
 
     return () => {
-      link.removeEventListener('pointerenter', onEnter)
-      link.removeEventListener('pointerleave', onLeave)
-      link.removeEventListener('focus', onEnter)
-      link.removeEventListener('blur', onLeave)
+      if (supportsHover) {
+        link.removeEventListener('pointerenter', onEnter)
+        link.removeEventListener('pointerleave', onLeave)
+        link.removeEventListener('focus', onEnter)
+        link.removeEventListener('blur', onLeave)
+      }
       link.removeEventListener('click', onClick)
     }
   })
@@ -817,10 +823,12 @@ export function initNavbar(root = document) {
       }, 0)
   }
 
-  closeToggle.addEventListener('pointerenter', showCloseBox)
-  closeToggle.addEventListener('pointerleave', hideCloseBox)
-  closeToggle.addEventListener('focus', showCloseBox)
-  closeToggle.addEventListener('blur', hideCloseBox)
+  if (supportsHover) {
+    closeToggle.addEventListener('pointerenter', showCloseBox)
+    closeToggle.addEventListener('pointerleave', hideCloseBox)
+    closeToggle.addEventListener('focus', showCloseBox)
+    closeToggle.addEventListener('blur', hideCloseBox)
+  }
 
   const closeMenuDuringTransition = () => {
     closeMenu({ restartScroll: false })
@@ -839,10 +847,12 @@ export function initNavbar(root = document) {
     removeHoverListeners.forEach((removeListener) => removeListener())
     openToggle.removeEventListener('click', openMenu)
     closeToggle.removeEventListener('click', closeMenu)
-    closeToggle.removeEventListener('pointerenter', showCloseBox)
-    closeToggle.removeEventListener('pointerleave', hideCloseBox)
-    closeToggle.removeEventListener('focus', showCloseBox)
-    closeToggle.removeEventListener('blur', hideCloseBox)
+    if (supportsHover) {
+      closeToggle.removeEventListener('pointerenter', showCloseBox)
+      closeToggle.removeEventListener('pointerleave', hideCloseBox)
+      closeToggle.removeEventListener('focus', showCloseBox)
+      closeToggle.removeEventListener('blur', hideCloseBox)
+    }
     window.removeEventListener('global-transition-cover-start', closeMenuDuringTransition)
 
     if (isOpen) {

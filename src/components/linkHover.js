@@ -1,5 +1,6 @@
 import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
+import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(SplitText)
 
@@ -56,6 +57,7 @@ function createGradientLayer(char) {
 
 export function initLinkHover(root = document) {
   if (!root?.querySelectorAll) return () => {}
+  if (!canUseHover()) return () => {}
 
   const triggers = gsap.utils.toArray(SELECTORS.trigger, root)
 

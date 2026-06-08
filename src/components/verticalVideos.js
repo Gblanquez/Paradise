@@ -1,4 +1,5 @@
 import gsap from 'gsap'
+import { canUseHover } from './hoverSupport.js'
 
 const SELECTORS = {
   container: '.story-carrousel-container',
@@ -71,6 +72,7 @@ function waitForVideo(video, updateProgress) {
 }
 
 export function initVerticalVideos(root = document) {
+  const supportsHover = canUseHover()
   const container = root.querySelector(SELECTORS.container)
   const wrapper = container?.querySelector(SELECTORS.wrapper)
 
@@ -391,10 +393,12 @@ export function initVerticalVideos(root = document) {
     item.video.preload = 'auto'
     item.video.playsInline = true
     item.video.setAttribute('playsinline', '')
-    item.onPointerEnter = (event) => handleStoryPointerEnter(item, event)
-    item.onPointerLeave = () => handleStoryPointerLeave(item)
-    item.story.addEventListener('pointerenter', item.onPointerEnter)
-    item.story.addEventListener('pointerleave', item.onPointerLeave)
+    if (supportsHover) {
+      item.onPointerEnter = (event) => handleStoryPointerEnter(item, event)
+      item.onPointerLeave = () => handleStoryPointerLeave(item)
+      item.story.addEventListener('pointerenter', item.onPointerEnter)
+      item.story.addEventListener('pointerleave', item.onPointerLeave)
+    }
   })
   syncToggleLabels()
 
@@ -416,8 +420,10 @@ export function initVerticalVideos(root = document) {
         item.loadTween?.kill()
         item.lineTween?.kill()
         item.video.pause()
-        item.story.removeEventListener('pointerenter', item.onPointerEnter)
-        item.story.removeEventListener('pointerleave', item.onPointerLeave)
+        if (supportsHover) {
+          item.story.removeEventListener('pointerenter', item.onPointerEnter)
+          item.story.removeEventListener('pointerleave', item.onPointerLeave)
+        }
       })
       container.removeEventListener('pointerdown', handlePointerDown)
       container.removeEventListener('pointermove', handlePointerMove)

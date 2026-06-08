@@ -1,5 +1,6 @@
 import gsap from 'gsap'
 import { Flip } from 'gsap/Flip'
+import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(Flip)
 
@@ -75,6 +76,7 @@ function notifyProjectsLayoutReady() {
 }
 
 export function initProjectList(root = document) {
+  const supportsHover = canUseHover()
   const links = gsap.utils.toArray(SELECTORS.link, root)
 
   if (!links.length) return () => {}
@@ -321,17 +323,21 @@ export function initProjectList(root = document) {
       const leave = () => setCategoryLine(lines, value === activeCategory)
 
       control.addEventListener('click', click)
-      control.addEventListener('pointerenter', enter)
-      control.addEventListener('pointerleave', leave)
-      control.addEventListener('focus', enter)
-      control.addEventListener('blur', leave)
+      if (supportsHover) {
+        control.addEventListener('pointerenter', enter)
+        control.addEventListener('pointerleave', leave)
+        control.addEventListener('focus', enter)
+        control.addEventListener('blur', leave)
+      }
 
       return () => {
         control.removeEventListener('click', click)
-        control.removeEventListener('pointerenter', enter)
-        control.removeEventListener('pointerleave', leave)
-        control.removeEventListener('focus', enter)
-        control.removeEventListener('blur', leave)
+        if (supportsHover) {
+          control.removeEventListener('pointerenter', enter)
+          control.removeEventListener('pointerleave', leave)
+          control.removeEventListener('focus', enter)
+          control.removeEventListener('blur', leave)
+        }
       }
     }),
     ...allCategoryEntries.map(({ control, lines }) => {
@@ -343,17 +349,21 @@ export function initProjectList(root = document) {
       const leave = () => setCategoryLine(lines, activeCategory === 'all')
 
       control.addEventListener('click', click)
-      control.addEventListener('pointerenter', enter)
-      control.addEventListener('pointerleave', leave)
-      control.addEventListener('focus', enter)
-      control.addEventListener('blur', leave)
+      if (supportsHover) {
+        control.addEventListener('pointerenter', enter)
+        control.addEventListener('pointerleave', leave)
+        control.addEventListener('focus', enter)
+        control.addEventListener('blur', leave)
+      }
 
       return () => {
         control.removeEventListener('click', click)
-        control.removeEventListener('pointerenter', enter)
-        control.removeEventListener('pointerleave', leave)
-        control.removeEventListener('focus', enter)
-        control.removeEventListener('blur', leave)
+        if (supportsHover) {
+          control.removeEventListener('pointerenter', enter)
+          control.removeEventListener('pointerleave', leave)
+          control.removeEventListener('focus', enter)
+          control.removeEventListener('blur', leave)
+        }
       }
     }),
   ]

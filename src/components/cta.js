@@ -1,4 +1,5 @@
 import gsap from 'gsap'
+import { canUseHover } from './hoverSupport.js'
 
 const SELECTORS = {
   cta: '[data-a="cta"]',
@@ -29,6 +30,7 @@ function findRelatedElement(element, selector) {
 
 export function initCta(root = document) {
   const ctas = gsap.utils.toArray(SELECTORS.cta, root)
+  const supportsHover = canUseHover()
 
   if (!ctas.length) return () => {}
 
@@ -129,18 +131,22 @@ export function initCta(root = document) {
       }
     }
 
-    cta.addEventListener('pointerenter', show)
-    cta.addEventListener('pointerleave', hide)
-    cta.addEventListener('focus', show)
-    cta.addEventListener('blur', hide)
+    if (supportsHover) {
+      cta.addEventListener('pointerenter', show)
+      cta.addEventListener('pointerleave', hide)
+      cta.addEventListener('focus', show)
+      cta.addEventListener('blur', hide)
+    }
 
     return {
       destroy: () => {
         tween?.kill()
-        cta.removeEventListener('pointerenter', show)
-        cta.removeEventListener('pointerleave', hide)
-        cta.removeEventListener('focus', show)
-        cta.removeEventListener('blur', hide)
+        if (supportsHover) {
+          cta.removeEventListener('pointerenter', show)
+          cta.removeEventListener('pointerleave', hide)
+          cta.removeEventListener('focus', show)
+          cta.removeEventListener('blur', hide)
+        }
         if (svgWrap) {
           gsap.set(svgWrap, { clearProps: 'transform,willChange' })
         }

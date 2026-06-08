@@ -2,6 +2,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import { addScrollListener } from './scroll.js'
+import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -87,6 +88,7 @@ export function initAlwaysSlider(root = document) {
   if (!parents.length) return () => {}
 
   const sliders = parents.map((parent) => {
+    const supportsHover = canUseHover()
     const thumbnails = getItems(parent, SELECTORS.thumbnail)
     const thumbTexts = thumbnails.map((thumbnail) => thumbnail.querySelector(SELECTORS.thumbText)).filter(Boolean)
     const titles = getContentItems(parent, SELECTORS.title)
@@ -246,12 +248,16 @@ export function initAlwaysSlider(root = document) {
       }
 
       thumbnail.addEventListener('click', handler)
-      thumbnail.addEventListener('pointerenter', showThumbText)
-      thumbnail.addEventListener('pointerleave', hideThumbText)
-      thumbnail.addEventListener('focusin', showThumbText)
-      thumbnail.addEventListener('focusout', hideThumbText)
+      if (supportsHover) {
+        thumbnail.addEventListener('pointerenter', showThumbText)
+        thumbnail.addEventListener('pointerleave', hideThumbText)
+        thumbnail.addEventListener('focusin', showThumbText)
+        thumbnail.addEventListener('focusout', hideThumbText)
+      }
       thumbnailClickHandlers.push({ thumbnail, handler })
-      thumbnailHoverHandlers.push({ thumbnail, showThumbText, hideThumbText })
+      if (supportsHover) {
+        thumbnailHoverHandlers.push({ thumbnail, showThumbText, hideThumbText })
+      }
     })
 
     const play = () => {

@@ -1,5 +1,6 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { canUseHover } from './hoverSupport.js'
 import { afterInitialLoad } from './load.js'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -91,6 +92,7 @@ function getVideoScope(video, root) {
 }
 
 function createInfoVideo(video, root, pauseOthers) {
+  const supportsHover = canUseHover()
   const scope = getVideoScope(video, root)
   const videoContainer = video.closest(SELECTORS.videoContainer) || scope?.querySelector(SELECTORS.videoContainer)
   const line = scope?.querySelector(SELECTORS.line)
@@ -285,8 +287,10 @@ function createInfoVideo(video, root, pauseOthers) {
   }
 
   scope.addEventListener('click', handleClick)
-  scope.addEventListener('pointerenter', showToggle)
-  scope.addEventListener('pointerleave', hideToggle)
+  if (supportsHover) {
+    scope.addEventListener('pointerenter', showToggle)
+    scope.addEventListener('pointerleave', hideToggle)
+  }
   video.addEventListener('play', syncToggleLabel)
   video.addEventListener('pause', syncToggleLabel)
 
@@ -297,8 +301,10 @@ function createInfoVideo(video, root, pauseOthers) {
       isDestroyed = true
       pause()
       scope.removeEventListener('click', handleClick)
-      scope.removeEventListener('pointerenter', showToggle)
-      scope.removeEventListener('pointerleave', hideToggle)
+      if (supportsHover) {
+        scope.removeEventListener('pointerenter', showToggle)
+        scope.removeEventListener('pointerleave', hideToggle)
+      }
       video.removeEventListener('play', syncToggleLabel)
       video.removeEventListener('pause', syncToggleLabel)
       loadTween?.kill()
