@@ -153,6 +153,17 @@ function createInfoVideo(video, root, pauseOthers) {
     })
   }
 
+  const showMobileArrow = () => {
+    if (supportsHover || !mobileArrow) return
+
+    gsap.to(mobileArrow, {
+      autoAlpha: 1,
+      duration: 0.25,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
   const resetLine = () => {
     loadTween?.kill()
     lineTween?.kill()
@@ -170,6 +181,7 @@ function createInfoVideo(video, root, pauseOthers) {
     requestId += 1
     isLoading = false
     video.pause()
+    showMobileArrow()
     syncToggleLabel()
   }
 

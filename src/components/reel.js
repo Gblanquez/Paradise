@@ -19,6 +19,8 @@ const SELECTORS = {
   settings: '.reel-settings',
 }
 
+const MIN_LOAD_LINE_DURATION = 650
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
@@ -83,6 +85,12 @@ function waitForVideo(video, updateProgress) {
 
     video.load()
     update()
+  })
+}
+
+function waitForMinimumLoadLine() {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, MIN_LOAD_LINE_DURATION)
   })
 }
 
@@ -288,7 +296,10 @@ export function initReel(root = document) {
       })
     }
 
-    await waitForVideo(video, setProgress)
+    await Promise.all([
+      waitForVideo(video, setProgress),
+      waitForMinimumLoadLine(),
+    ])
 
     if (activeRequest !== requestId) return
 

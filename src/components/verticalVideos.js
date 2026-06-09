@@ -168,6 +168,17 @@ export function initVerticalVideos(root = document) {
     })
   }
 
+  const showMobileArrow = (item) => {
+    if (supportsHover || !item?.mobileArrow) return
+
+    gsap.to(item.mobileArrow, {
+      autoAlpha: 1,
+      duration: 0.25,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
   const measure = () => {
     maxX = Math.max(0, wrapper.scrollWidth - container.clientWidth)
     currentX = clamp(currentX, -maxX, 0)
@@ -197,6 +208,7 @@ export function initVerticalVideos(root = document) {
     if (!item?.video) return
 
     item.video.pause()
+    showMobileArrow(item)
     syncToggleLabels()
   }
 
@@ -229,14 +241,17 @@ export function initVerticalVideos(root = document) {
         item.video.pause()
         resetLine(item)
         activeItem = null
+        showMobileArrow(item)
         syncToggleLabels()
         return
       }
 
       if (item.video.paused) {
+        hideMobileArrow(item)
         item.video.play().catch(() => {})
       } else {
         item.video.pause()
+        showMobileArrow(item)
       }
 
       syncToggleLabels()
@@ -248,6 +263,7 @@ export function initVerticalVideos(root = document) {
       activeItem.requestId += 1
       activeItem.isLoading = false
       activeItem.video.pause()
+      showMobileArrow(activeItem)
       syncToggleLabels()
     }
 
