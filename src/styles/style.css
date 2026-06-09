@@ -113,8 +113,7 @@ body {
 .sub-body
 {
     font-size: calc(52 / 1728 * 100 * var(--vw));
-    line-height: 1.1;   
-    margin-bottom: 0.5rem;
+    line-height: 1.3;   
 }
 
 
