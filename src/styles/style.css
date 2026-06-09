@@ -163,7 +163,7 @@ body {
     }
   
     .label {
-      font-size: clamp(1rem, 2.9167vw, 0.875rem);
+      font-size: clamp(0.9rem, 2.9167vw, 0.875rem);
       line-height: 1.3;
     }
 
