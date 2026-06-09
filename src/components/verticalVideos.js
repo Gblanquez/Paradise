@@ -9,6 +9,7 @@ const SELECTORS = {
   line: '.load-vertical-line',
   playToggleParent: '.play-toggle-parent',
   playToggle: '[data-a="play-toggle"]',
+  mobileArrow: '.mob-arrow-showcase',
 }
 
 const DRAG_THRESHOLD = 6
@@ -90,6 +91,7 @@ export function initVerticalVideos(root = document) {
     line: story.querySelector(SELECTORS.line),
     playToggleParent: story.querySelector(SELECTORS.playToggleParent),
     playToggle: story.querySelector(SELECTORS.playToggle),
+    mobileArrow: story.querySelector(SELECTORS.mobileArrow),
     loadTween: null,
     lineTween: null,
     requestId: 0,
@@ -155,6 +157,17 @@ export function initVerticalVideos(root = document) {
     })
   }
 
+  const hideMobileArrow = (item) => {
+    if (supportsHover || !item?.mobileArrow) return
+
+    gsap.to(item.mobileArrow, {
+      autoAlpha: 0,
+      duration: 0.25,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
   const measure = () => {
     maxX = Math.max(0, wrapper.scrollWidth - container.clientWidth)
     currentX = clamp(currentX, -maxX, 0)
@@ -205,6 +218,8 @@ export function initVerticalVideos(root = document) {
   }
 
   const playItem = async (item) => {
+    hideMobileArrow(item)
+
     if (!item || activeItem === item) {
       if (!item?.video) return
 
@@ -434,6 +449,7 @@ export function initVerticalVideos(root = document) {
       gsap.set(wrapper, { clearProps: 'display,willChange,transform' })
       gsap.set(items.map(({ line }) => line), { clearProps: 'width,scaleX,transformOrigin' })
       gsap.set(items.map(({ playToggleParent }) => playToggleParent).filter(Boolean), { clearProps: 'opacity' })
+      gsap.set(items.map(({ mobileArrow }) => mobileArrow).filter(Boolean), { clearProps: 'opacity,visibility' })
     },
   }
 }

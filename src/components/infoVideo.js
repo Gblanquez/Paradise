@@ -11,6 +11,7 @@ const SELECTORS = {
   line: '.info-load-line',
   playToggleParent: '.play-toggle-parent',
   playToggle: '[data-c="play-toggle"]',
+  mobileArrow: '.mob-arrow-showcase',
 }
 
 const VIDEO_MASK_RADIUS = '0.8rem'
@@ -98,6 +99,7 @@ function createInfoVideo(video, root, pauseOthers) {
   const line = scope?.querySelector(SELECTORS.line)
   const playToggleParent = scope?.querySelector(SELECTORS.playToggleParent)
   const playToggle = scope?.querySelector(SELECTORS.playToggle)
+  const mobileArrow = scope?.querySelector(SELECTORS.mobileArrow)
 
   if (!scope || !line) return null
 
@@ -135,6 +137,17 @@ function createInfoVideo(video, root, pauseOthers) {
     gsap.to(playToggleParent, {
       opacity: 0,
       duration: 0.2,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+  }
+
+  const hideMobileArrow = () => {
+    if (supportsHover || !mobileArrow) return
+
+    gsap.to(mobileArrow, {
+      autoAlpha: 0,
+      duration: 0.25,
       ease: 'power2.out',
       overwrite: true,
     })
@@ -224,6 +237,8 @@ function createInfoVideo(video, root, pauseOthers) {
   }
 
   const handleClick = () => {
+    hideMobileArrow()
+
     if (isLoading) {
       pause()
       resetLine()
@@ -313,6 +328,7 @@ function createInfoVideo(video, root, pauseOthers) {
       revealTween?.kill()
       gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
       gsap.set(playToggleParent, { clearProps: 'opacity' })
+      gsap.set(mobileArrow, { clearProps: 'opacity,visibility' })
       if (videoContainer) {
         gsap.set(videoContainer, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange,--mask-x,--mask-y,--mask-radius' })
       }

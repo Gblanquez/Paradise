@@ -168,6 +168,11 @@ body {
       line-height: 1.3;
     }
 
+    .label.mob-large {
+        font-size: 1.2rem !important;
+        line-height: 1.3;
+      }
+
     .sub-label {
         font-size: clamp(0.875rem, 3.75vw, 1.125rem);
         line-height: 1.3;
