@@ -19,6 +19,10 @@ const VIDEO_MASK_CLIP = 'inset(var(--mask-y) var(--mask-x) var(--mask-y) var(--m
 function playVideo(video) {
   if (!video) return
 
+  video.autoplay = true
+  video.playsInline = true
+  video.setAttribute('autoplay', '')
+  video.setAttribute('playsinline', '')
   video.play?.().catch(() => {})
 }
 
@@ -27,9 +31,7 @@ export function initHeroSection(root = document, options = {}) {
   const videoMasks = gsap.utils.toArray(SELECTORS.videoMask, root)
   const moveItems = gsap.utils.toArray(SELECTORS.move, root)
   const videoParents = gsap.utils.toArray(SELECTORS.videoParent, root)
-  const videos = videoMasks
-    .map((mask) => mask.querySelector(SELECTORS.video) || root.querySelector(SELECTORS.video))
-    .filter(Boolean)
+  const videos = gsap.utils.toArray(SELECTORS.video, root)
 
   let isAlive = true
   let didRevealReady = false
@@ -90,6 +92,10 @@ export function initHeroSection(root = document, options = {}) {
   if (!videoMasks.length) {
     requestAnimationFrame(revealReady)
   }
+
+  requestAnimationFrame(() => {
+    videos.forEach((video) => playVideo(video))
+  })
 
   let scrubTimeline = null
   let pinTrigger = null
