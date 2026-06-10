@@ -35,6 +35,15 @@ float hash(vec2 p) {
   return fract(p.x * p.y);
 }
 
+float filmGrain(vec2 p, float time, float seed) {
+  vec2 q = p + vec2(seed * 17.17, time * 83.31);
+  float a = fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453123);
+  float b = fract(sin(dot(q + vec2(23.4, 91.7), vec2(269.5, 183.3))) * 24634.6345);
+  float c = fract(sin(dot(q * mat2(0.8, -0.6, 0.6, 0.8), vec2(419.2, 371.9))) * 15731.7431);
+
+  return (a + b + c) / 3.0 - 0.5;
+}
+
 vec2 gradient(vec2 p) {
   float angle = hash(p) * 6.28318530718;
 
@@ -253,12 +262,12 @@ void main() {
   color = mix(color, dark, clamp(darkMass * 0.86 + (1.0 - diagonal) * 0.22, 0.0, 0.94));
 
   float vignette = smoothstep(1.05, 0.1, distance(uv, vec2(0.5, 0.5)));
-  float grain = hash(gl_FragCoord.xy * 1.85 + vec2(u_seed * 31.0, time * 28.0)) - 0.5;
-  float grainFine = hash(gl_FragCoord.xy * 4.2 + vec2(time * 37.0, u_seed * 17.0)) - 0.5;
+  float grain = filmGrain(gl_FragCoord.xy, time, u_seed);
+  float grainFine = filmGrain(gl_FragCoord.xy * 1.73 + vec2(41.0, 19.0), time * 1.37, u_seed + 4.0);
 
   color *= 0.72 + vignette * 0.36;
   color = pow(max(color, vec3(0.0)), vec3(0.94));
-  color += (grain * 0.7 + grainFine * 0.3) * 0.034;
+  color += (grain * 0.78 + grainFine * 0.22) * 0.032;
   color = mix(color, dark, 0.08);
 
   gl_FragColor = vec4(color, 1.0);
