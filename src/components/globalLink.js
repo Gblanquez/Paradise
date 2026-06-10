@@ -24,7 +24,7 @@ export function initGlobalLink(root = document) {
 
   gsap.set(allBoxes, {
     width: '0%',
-    height: '100%',
+    height: '1.4px',
   })
 
   if (!canUseHover()) return () => {
