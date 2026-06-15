@@ -6,7 +6,6 @@ gsap.registerPlugin(ScrollTrigger)
 const SELECTORS = {
   footer: '[data="footer"]',
   footerFallback: '#contact',
-  pageMain: '.page-main',
   trigger: '[data-a="foot-trigger"]',
 }
 
@@ -39,11 +38,6 @@ export function initFooter(root = document) {
   if (!footer || !trigger) return () => {}
 
   footer._paradiseFooterDestroy?.()
-
-  gsap.set(footer, {
-    position: 'sticky',
-    bottom: 0,
-  })
 
   const scrubTimeline = gsap.timeline({
     scrollTrigger: {
@@ -79,16 +73,4 @@ export function initFooter(root = document) {
   footer._paradiseFooterDestroy = destroy
 
   return destroy
-}
-
-export function ensureFooterSticky(root = document) {
-  const footers = [
-    queryScoped(root, SELECTORS.footer),
-    queryScoped(root, SELECTORS.footerFallback),
-  ].filter(Boolean)
-
-  ;[...new Set(footers)].forEach((footer) => {
-    footer.style.position = 'sticky'
-    footer.style.bottom = '0'
-  })
 }

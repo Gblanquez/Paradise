@@ -3,7 +3,7 @@ import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import { initAboutSection } from '../components/aboutSection.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
-import { ensureFooterSticky, initFooter } from '../components/footer.js'
+import { initFooter } from '../components/footer.js'
 import { initGlobalLink } from '../components/globalLink.js'
 import imagesAnimation from '../components/imagesAnimation.js'
 import { initLinkHover } from '../components/linkHover.js'
@@ -89,7 +89,6 @@ export default class workRender extends Renderer {
   }
 
   onEnterCompleted() {
-    ensureFooterSticky(this.content)
     window.dispatchEvent(new CustomEvent('page:entered'))
 
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
