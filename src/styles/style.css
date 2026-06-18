@@ -198,6 +198,17 @@ body {
   }
 
 
+  .play-toggle label
+  {
+    position: absolute !important;
+  }
+
+  .play-toggle .label
+  {
+    position: absolute !important;
+  }
+
+
 
 
 
