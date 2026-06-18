@@ -198,14 +198,12 @@ body {
   }
 
 
-  .play-toggle label
-  {
-    position: absolute !important;
-  }
 
 
-
-
+.mute-toggle 
+{
+ position:absolute !important;
+}
 
 
   
