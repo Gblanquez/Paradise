@@ -62,10 +62,21 @@ function scrollToHash(hash, options = {}) {
   if (!hash) return false
 
   if (hash === '#hero') {
+    window.scrollTo(0, 0)
     lenis.scrollTo(0, {
       offset: 0,
       force: true,
+      immediate: true,
       ...options,
+    })
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0)
+      lenis.scrollTo(0, {
+        offset: 0,
+        force: true,
+        immediate: true,
+        ...options,
+      })
     })
     return true
   }

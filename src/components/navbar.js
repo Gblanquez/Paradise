@@ -672,21 +672,23 @@ export function initNavbar(root = document) {
   const removeHoverListeners = navLinks.map((link) => {
     const getGradientLayers = () => navTextGroups.find((group) => group.link === link)?.gradientLayers || []
     const onClick = async (event) => {
-      if (!isOpen) return
-
       const url = getLinkUrl(link)
 
       if (!url || url.origin !== window.location.origin) return
 
-      event.preventDefault()
-
       if (url.hash && isSamePageUrl(url)) {
-        await closeMenu()
+        event.preventDefault()
+        if (isOpen) {
+          await closeMenu()
+        }
         window.history.pushState(null, '', `${url.pathname}${url.search}${url.hash}`)
         scrollToHash(url.hash)
         return
       }
 
+      if (!isOpen) return
+
+      event.preventDefault()
       navigateWithTaxi(url).catch(() => {
         closeMenu()
         window.location.href = url.href
