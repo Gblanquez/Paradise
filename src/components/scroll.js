@@ -58,6 +58,31 @@ function stopRAF() {
   }
 }
 
-export { lenis, startRAF, stopRAF, setOnScrollUpdate, addScrollListener }
+function scrollToHash(hash, options = {}) {
+  if (!hash) return false
+
+  if (hash === '#hero') {
+    lenis.scrollTo(0, {
+      offset: 0,
+      force: true,
+      ...options,
+    })
+    return true
+  }
+
+  const target = document.querySelector(hash)
+
+  if (!target) return false
+
+  lenis.scrollTo(target, {
+    offset: 0,
+    force: true,
+    ...options,
+  })
+
+  return true
+}
+
+export { lenis, startRAF, stopRAF, setOnScrollUpdate, addScrollListener, scrollToHash }
 
 startRAF()

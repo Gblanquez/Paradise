@@ -2,7 +2,7 @@ import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin'
-import { addScrollListener, lenis } from './scroll.js'
+import { addScrollListener, lenis, scrollToHash } from './scroll.js'
 import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(SplitText, ScrollTrigger, MorphSVGPlugin)
@@ -424,19 +424,6 @@ export function initNavbar(root = document) {
   const unlockScrollStyles = () => {
     document.body.style.overflow = previousBodyOverflow
     document.documentElement.style.overflow = previousHtmlOverflow
-  }
-
-  const scrollToHash = (hash) => {
-    if (!hash) return
-
-    const target = document.querySelector(hash)
-
-    if (!target) return
-
-    lenis.scrollTo(target, {
-      offset: 0,
-      force: true,
-    })
   }
 
   const getLinkUrl = (link) => {

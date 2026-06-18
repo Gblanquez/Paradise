@@ -15,7 +15,7 @@ import { animateNavbarView, initNavbar, prepareNavbarView } from '../components/
 import { initReel } from '../components/reel.js'
 import { prepareAnimationStates } from '../components/prepareAnimationStates.js'
 import { initScaling } from '../components/scaling.js'
-import { lenis, startRAF } from '../components/scroll.js'
+import { scrollToHash, startRAF } from '../components/scroll.js'
 import { initShowcaseSection } from '../components/showcaseSection.js'
 import { initTalent } from '../components/talent.js'
 import { initWorkCarrousel } from '../components/workCarrousel.js'
@@ -101,14 +101,7 @@ export default class globalRender extends Renderer {
     window.sessionStorage.removeItem('pendingHashScroll')
 
     requestAnimationFrame(() => {
-      const target = document.querySelector(pendingHash)
-
-      if (!target) return
-
-      lenis.scrollTo(target, {
-        offset: 0,
-        force: true,
-      })
+      scrollToHash(pendingHash)
     })
   }
 
