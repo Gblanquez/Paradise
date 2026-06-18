@@ -82,7 +82,7 @@ function scrollToTop(options = {}) {
   lenis.scrollTo(0, {
     offset: 0,
     force: true,
-    duration: 1.45,
+    duration: 1.6,
     ...options,
   })
 
