@@ -15,7 +15,7 @@ import { animateNavbarView, initNavbar, prepareNavbarView } from '../components/
 import { initReel } from '../components/reel.js'
 import { prepareAnimationStates } from '../components/prepareAnimationStates.js'
 import { initScaling } from '../components/scaling.js'
-import { scrollToHash, startRAF } from '../components/scroll.js'
+import { scrollToHash, scrollToTop, startRAF } from '../components/scroll.js'
 import { initShowcaseSection } from '../components/showcaseSection.js'
 import { initTalent } from '../components/talent.js'
 import { initWorkCarrousel } from '../components/workCarrousel.js'
@@ -94,13 +94,19 @@ export default class globalRender extends Renderer {
   onEnterCompleted() {
     window.dispatchEvent(new CustomEvent('page:entered'))
 
+    const pendingScrollTop = window.sessionStorage.getItem('pendingScrollTop')
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
 
-    if (!pendingHash) return
+    if (!pendingScrollTop && !pendingHash) return
 
+    window.sessionStorage.removeItem('pendingScrollTop')
     window.sessionStorage.removeItem('pendingHashScroll')
 
     requestAnimationFrame(() => {
+      if (pendingScrollTop) {
+        scrollToTop()
+        return
+      }
       scrollToHash(pendingHash)
     })
   }

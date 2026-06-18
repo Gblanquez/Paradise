@@ -2,7 +2,7 @@ import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin'
-import { addScrollListener, lenis, scrollToHash } from './scroll.js'
+import { addScrollListener, lenis, scrollToHash, scrollToTop } from './scroll.js'
 import { canUseHover } from './hoverSupport.js'
 
 gsap.registerPlugin(SplitText, ScrollTrigger, MorphSVGPlugin)
@@ -440,6 +440,43 @@ export function initNavbar(root = document) {
     && url.search === window.location.search
   )
 
+  const onScrollTopClick = async (event) => {
+    const trigger = event.target?.closest?.('[data-a="scroll-top"]')
+
+    if (!trigger) return
+
+    const link = trigger.matches?.('a[href]')
+      ? trigger
+      : trigger.querySelector?.('a[href]')
+
+    const url = link ? getLinkUrl(link) : null
+
+    if (url && url.origin !== window.location.origin) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation?.()
+
+    if (isOpen) {
+      await closeMenu()
+    }
+
+    if (!url || isSamePageUrl(url)) {
+      if (url) {
+        window.history.pushState(null, '', `${url.pathname}${url.search}`)
+      }
+      scrollToTop()
+      return
+    }
+
+    window.sessionStorage.setItem('pendingScrollTop', 'true')
+
+    const taxiModule = await import('../taxi/transition.js')
+    const taxi = taxiModule.default
+
+    taxi.navigateTo(`${url.pathname}${url.search}`)
+  }
+
   const navigateWithTaxi = async (url) => {
     if (url.hash) {
       window.sessionStorage.setItem('pendingHashScroll', url.hash)
@@ -824,6 +861,7 @@ export function initNavbar(root = document) {
   }
 
   window.addEventListener('global-transition-cover-start', closeMenuDuringTransition)
+  document.addEventListener('click', onScrollTopClick, true)
 
   return () => {
     activeTween?.kill()
@@ -843,6 +881,7 @@ export function initNavbar(root = document) {
       closeToggle.removeEventListener('blur', hideCloseBox)
     }
     window.removeEventListener('global-transition-cover-start', closeMenuDuringTransition)
+    document.removeEventListener('click', onScrollTopClick, true)
 
     if (isOpen) {
       closeMenu()

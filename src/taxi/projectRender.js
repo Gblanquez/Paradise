@@ -14,7 +14,7 @@ import { animateNavbarView, initNavbar, prepareNavbarView } from '../components/
 import { prepareAnimationStates } from '../components/prepareAnimationStates.js'
 import { initReel } from '../components/reel.js'
 import { initScaling } from '../components/scaling.js'
-import { lenis, scrollToHash, startRAF } from '../components/scroll.js'
+import { lenis, scrollToHash, scrollToTop, startRAF } from '../components/scroll.js'
 import { initProjectList } from '../components/project.js'
 import { initShowcaseSection } from '../components/showcaseSection.js'
 import { initTalent } from '../components/talent.js'
@@ -88,13 +88,19 @@ export default class projectRender extends Renderer {
     lenis.resize()
     window.dispatchEvent(new CustomEvent('page:entered'))
 
+    const pendingScrollTop = window.sessionStorage.getItem('pendingScrollTop')
     const pendingHash = window.sessionStorage.getItem('pendingHashScroll') || window.location.hash
 
-    if (!pendingHash) return
+    if (!pendingScrollTop && !pendingHash) return
 
+    window.sessionStorage.removeItem('pendingScrollTop')
     window.sessionStorage.removeItem('pendingHashScroll')
 
     requestAnimationFrame(() => {
+      if (pendingScrollTop) {
+        scrollToTop()
+        return
+      }
       scrollToHash(pendingHash)
     })
   }

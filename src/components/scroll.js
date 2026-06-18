@@ -62,23 +62,7 @@ function scrollToHash(hash, options = {}) {
   if (!hash) return false
 
   if (hash === '#hero') {
-    window.scrollTo(0, 0)
-    lenis.scrollTo(0, {
-      offset: 0,
-      force: true,
-      immediate: true,
-      ...options,
-    })
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0)
-      lenis.scrollTo(0, {
-        offset: 0,
-        force: true,
-        immediate: true,
-        ...options,
-      })
-    })
-    return true
+    return scrollToTop(options)
   }
 
   const target = document.querySelector(hash)
@@ -94,6 +78,17 @@ function scrollToHash(hash, options = {}) {
   return true
 }
 
-export { lenis, startRAF, stopRAF, setOnScrollUpdate, addScrollListener, scrollToHash }
+function scrollToTop(options = {}) {
+  lenis.scrollTo(0, {
+    offset: 0,
+    force: true,
+    duration: 1.45,
+    ...options,
+  })
+
+  return true
+}
+
+export { lenis, startRAF, stopRAF, setOnScrollUpdate, addScrollListener, scrollToHash, scrollToTop }
 
 startRAF()
