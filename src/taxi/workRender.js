@@ -25,6 +25,43 @@ import { initWhySection } from '../components/whySection.js'
 import { initVerticalVideos } from '../components/verticalVideos.js'
 import titleTextReveal from '../components/titleText.js'
 
+function initProjectVideos(root = document) {
+  const videos = Array.from(root.querySelectorAll?.('.project-video') || [])
+
+  if (!videos.length) return () => {}
+
+  const removeListeners = videos.map((video) => {
+    const playVideo = () => {
+      video.play?.().catch(() => {})
+    }
+
+    video.autoplay = true
+    video.playsInline = true
+    video.setAttribute('autoplay', '')
+    video.setAttribute('playsinline', '')
+
+    if (video.hasAttribute('muted')) {
+      video.muted = true
+      video.defaultMuted = true
+    }
+
+    if (video.readyState >= 2) {
+      playVideo()
+    } else {
+      video.addEventListener('canplay', playVideo, { once: true })
+      video.load?.()
+    }
+
+    return () => {
+      video.removeEventListener('canplay', playVideo)
+    }
+  })
+
+  return () => {
+    removeListeners.forEach((remove) => remove())
+  }
+}
+
 export default class workRender extends Renderer {
   destroyAlwaysSlider = () => {}
   destroyAboutSection = () => {}
@@ -46,6 +83,7 @@ export default class workRender extends Renderer {
   destroyInfoCarrousel = () => {}
   destroyInfoVideo = () => {}
   destroyVerticalVideos = () => {}
+  destroyProjectVideos = () => {}
   destroyLoadAnimation = () => {}
   destroyMask = () => {}
   isLeaving = false
@@ -72,6 +110,7 @@ export default class workRender extends Renderer {
 
     const verticalVideos = initVerticalVideos(this.content)
     this.destroyVerticalVideos = () => verticalVideos.destroy()
+    this.destroyProjectVideos = initProjectVideos(this.content)
     prepareAnimationStates(this.content)
     prepareNavbarView(document)
 
@@ -150,6 +189,8 @@ export default class workRender extends Renderer {
     this.destroyInfoVideo = () => {}
     this.destroyVerticalVideos()
     this.destroyVerticalVideos = () => {}
+    this.destroyProjectVideos()
+    this.destroyProjectVideos = () => {}
     this.destroyLoadAnimation()
     this.destroyLoadAnimation = () => {}
   }
