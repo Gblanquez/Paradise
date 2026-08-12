@@ -1,6 +1,5 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { initWhyGradientMeshes } from './whyGradientMesh.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -30,7 +29,6 @@ export function initWhySection(root = document) {
   if (!parents.length && !lines.length) return () => {}
 
   let lineTween = null
-  const destroyGradientMeshes = initWhyGradientMeshes(root)
 
   if (section && lines.length) {
     gsap.set(lines, {
@@ -291,7 +289,6 @@ export function initWhySection(root = document) {
   return () => {
     lineTween?.scrollTrigger?.kill()
     lineTween?.kill()
-    destroyGradientMeshes()
     gsap.set(lines, { clearProps: 'transform,transformOrigin' })
     sliders.forEach((slider) => slider.destroy())
   }
