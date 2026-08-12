@@ -1,8 +1,5 @@
 import gsap from 'gsap'
-import { Flip } from 'gsap/Flip'
 import { canUseHover } from './hoverSupport.js'
-
-gsap.registerPlugin(Flip)
 
 const SELECTORS = {
   list: '.wk-collection-list',
@@ -17,17 +14,6 @@ const SELECTORS = {
   categoryItem: '.category-list-item',
   categoryLine: '.category-line',
   mobileInactive: '[data-a="mob-inactive"]',
-}
-
-const FILTERED_FRAME_SIZES = {
-  active: {
-    width: '40vw',
-    height: '22vw',
-  },
-  inactive: {
-    width: '12vw',
-    height: '6vw',
-  },
 }
 
 const MOBILE_FILTER_QUERY = '(max-width: 780px)'
@@ -107,6 +93,10 @@ function notifyProjectsLayoutReady() {
   window.dispatchEvent(new CustomEvent('projects:layout-ready'))
 }
 
+function setStyle(element, property, value, priority = '') {
+  element?.style.setProperty(property, value, priority)
+}
+
 export function initProjectList(root = document) {
   const supportsHover = canUseHover()
   const mobileFilterMedia = window.matchMedia(MOBILE_FILTER_QUERY)
@@ -119,8 +109,8 @@ export function initProjectList(root = document) {
   const frames = items.map((item) => item.querySelector(SELECTORS.frame))
   const projectMasks = items.map((item) => item.querySelector(SELECTORS.maskProject)).filter(Boolean)
   const projectScales = items.map((item) => item.querySelector(SELECTORS.scaleProject)).filter(Boolean)
-  const flipTargets = [...items, ...frames.filter(Boolean)]
   const cTextGroups = items.map((item) => gsap.utils.toArray(SELECTORS.cText, item))
+  const projectCategoryGroups = items.map((item) => gsap.utils.toArray(SELECTORS.category, item))
   const originalTabIndexes = links.map((link) => link.getAttribute('tabindex'))
   const linkCategories = links.map((link, index) => {
     const categories = [
@@ -156,9 +146,14 @@ export function initProjectList(root = document) {
   const categoryLines = [...new Set(categoryEntriesAll.flatMap(({ lines }) => lines))]
 
   let activeCategory = 'all'
-  let activeFlip = null
 
-  const isMobileFilterLayout = () => mobileFilterMedia.matches
+  const isMobileFilterLayout = () => {
+    const listWidth = list?.getBoundingClientRect().width || 0
+
+    if (listWidth) return listWidth <= 780
+
+    return mobileFilterMedia.matches
+  }
 
   const moveItemToList = (item, index) => {
     if (!list) return
@@ -193,9 +188,20 @@ export function initProjectList(root = document) {
     }
   }
 
+  const setProjectCategoryLabels = (category) => {
+    const isAll = category === 'all'
+
+    projectCategoryGroups.forEach((categoryLabels) => {
+      categoryLabels.forEach((label) => {
+        const isSelected = isAll || getCategoryValues(label).includes(category)
+
+        label.style.display = isSelected ? '' : 'none'
+      })
+    })
+  }
+
   const applyCategoryLayout = (category) => {
     const isAll = category === 'all'
-    let activeIndex = 0
 
     if (list) {
       list.classList.toggle('is-filtered', !isAll)
@@ -206,15 +212,11 @@ export function initProjectList(root = document) {
       } else {
         const isMobile = isMobileFilterLayout()
 
-        list.style.display = 'grid'
-        list.style.gridTemplateColumns = isMobile
-          ? 'repeat(6, minmax(0, 1fr))'
-          : 'repeat(16, minmax(0, 1fr))'
-        if (isMobile) {
-          list.style.columnGap = '1rem'
-        } else {
-          list.style.removeProperty('column-gap')
-        }
+        setStyle(list, 'display', 'grid', 'important')
+        setStyle(list, 'grid-template-columns', isMobile
+          ? '1fr'
+          : 'repeat(2, minmax(0, 1fr))', 'important')
+        setStyle(list, 'column-gap', '1rem', 'important')
       }
     }
 
@@ -233,6 +235,7 @@ export function initProjectList(root = document) {
         item.style.removeProperty('grid-row')
         item.style.removeProperty('z-index')
         item.style.removeProperty('min-width')
+        item.style.removeProperty('display')
         frame?.style.removeProperty('width')
         frame?.style.removeProperty('height')
         return
@@ -241,60 +244,30 @@ export function initProjectList(root = document) {
       if (isActive) {
         moveItemToList(item, index)
         setLinkInteractive(link, true)
-        const row = isMobile ? activeIndex + 1 : Math.floor(activeIndex / 2) + 1
-        const columnStart = isMobile
-          ? 1
-          : (activeIndex % 2 === 0 ? 1 : 6)
-        const columnSpan = isMobile ? 5 : 5
-
-        activeIndex += 1
-
-        item.style.gridColumn = isMobile
-          ? '1 / 6'
-          : `${columnStart} / span ${columnSpan}`
-        item.style.gridRow = String(row)
+        item.style.removeProperty('display')
+        item.style.removeProperty('grid-column')
+        item.style.removeProperty('grid-row')
         item.style.zIndex = '2'
         item.style.minWidth = '0'
         item.style.removeProperty('pointer-events')
         item.classList.add('is-active')
         item.classList.remove('is-inactive')
-        if (frame) {
-          if (isMobile) {
-            frame.style.removeProperty('width')
-            frame.style.height = '18rem'
-          } else {
-            frame.style.width = FILTERED_FRAME_SIZES.active.width
-            frame.style.height = FILTERED_FRAME_SIZES.active.height
-          }
-        }
+        frame?.style.removeProperty('width')
+        frame?.style.removeProperty('height')
         return
       }
 
-      if (isMobile) {
-        moveItemToList(item, index)
-        item.style.gridColumn = '6 / 7'
-        item.style.gridRow = '1'
-      } else {
-        moveItemToList(item, index)
-        item.style.gridColumn = '14 / 16'
-        item.style.gridRow = '1'
-      }
-
-      item.style.zIndex = '1'
-      item.style.minWidth = '0'
+      item.style.display = 'none'
+      item.style.removeProperty('grid-column')
+      item.style.removeProperty('grid-row')
+      item.style.removeProperty('z-index')
+      item.style.removeProperty('min-width')
       item.style.pointerEvents = 'none'
       setLinkInteractive(link, false)
       item.classList.add('is-inactive')
       item.classList.remove('is-active')
-      if (frame) {
-        if (isMobile) {
-          frame.style.removeProperty('width')
-          frame.style.height = '4rem'
-        } else {
-          frame.style.width = FILTERED_FRAME_SIZES.inactive.width
-          frame.style.height = FILTERED_FRAME_SIZES.inactive.height
-        }
-      }
+      frame?.style.removeProperty('width')
+      frame?.style.removeProperty('height')
     })
   }
 
@@ -373,16 +346,14 @@ export function initProjectList(root = document) {
 
     if (!immediate && nextCategory === activeCategory) return
 
-    activeFlip?.kill()
     if (!immediate) {
       revealProjectMasks()
     }
 
-    const currentListHeight = list?.getBoundingClientRect().height || 0
-    const state = !immediate ? Flip.getState(flipTargets) : null
     const { activeTexts, inactiveTexts } = getCategoryTexts(nextCategory)
 
     activeCategory = nextCategory
+    setProjectCategoryLabels(activeCategory)
     gsap.to(inactiveTexts, {
       y: '100%',
       opacity: 0,
@@ -393,41 +364,9 @@ export function initProjectList(root = document) {
     })
 
     applyCategoryLayout(activeCategory)
-    const nextListHeight = list?.getBoundingClientRect().height || 0
-
-    if (state && list) {
-      list.style.minHeight = `${Math.max(currentListHeight, nextListHeight)}px`
-    }
 
     if (immediate) {
       animateCategoryText(activeCategory, true)
-    }
-
-    if (state) {
-      activeFlip = Flip.from(state, {
-        duration: 0.9,
-        ease: 'power3.inOut',
-        absolute: items,
-        nested: true,
-        stagger: {
-          each: 0.025,
-          from: activeCategory === 'all' ? 'end' : 'start',
-        },
-        overwrite: true,
-        onComplete: () => {
-          list?.style.removeProperty('min-height')
-          notifyProjectsLayoutReady()
-          gsap.to(activeTexts, {
-            y: '0%',
-            opacity: 1,
-            duration: 0.42,
-            ease: 'power3.out',
-            stagger: 0.015,
-            overwrite: true,
-          })
-          activeFlip = null
-        },
-      })
     } else if (!immediate) {
       gsap.to(activeTexts, {
         y: '0%',
@@ -521,7 +460,6 @@ export function initProjectList(root = document) {
   mobileFilterMedia.addEventListener?.('change', handleFilterBreakpointChange)
 
   return () => {
-    activeFlip?.kill()
     mobileFilterMedia.removeEventListener?.('change', handleFilterBreakpointChange)
     removeCategoryListeners.forEach((remove) => remove())
     categoryButtons.forEach((button) => {
@@ -541,8 +479,12 @@ export function initProjectList(root = document) {
       item.style.removeProperty('grid-row')
       item.style.removeProperty('z-index')
       item.style.removeProperty('min-width')
+      item.style.removeProperty('display')
       frames[index]?.style.removeProperty('width')
       frames[index]?.style.removeProperty('height')
+    })
+    projectCategoryGroups.flat().forEach((label) => {
+      label.style.removeProperty('display')
     })
     gsap.set(links, { clearProps: 'opacity,transform' })
     gsap.set(cTextGroups.flat(), { clearProps: 'opacity,transform' })
