@@ -36,6 +36,13 @@ function normalizeCategory(text) {
   return text.replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
+function splitCategoryValue(value) {
+  return String(value || '')
+    .split(/[,|;/]+/)
+    .map(normalizeCategory)
+    .filter(Boolean)
+}
+
 function getCategoryText(element) {
   if (!element) return ''
 
@@ -46,20 +53,40 @@ function getCategoryText(element) {
   return clone.textContent || ''
 }
 
-function getExplicitCategory(element) {
-  if (!element) return ''
+function getExplicitCategories(element) {
+  if (!element) return []
+
+  const values = []
 
   const value = element.getAttribute('data-category')
 
-  if (value) return value
+  if (value) {
+    values.push(...splitCategoryValue(value))
+  }
 
-  const child = element.querySelector?.(SELECTORS.category)
+  const children = gsap.utils.toArray(SELECTORS.category, element)
 
-  return child?.getAttribute('data-category') || ''
+  children.forEach((child) => {
+    const childValue = child.getAttribute('data-category')
+
+    if (childValue) {
+      values.push(...splitCategoryValue(childValue))
+    }
+  })
+
+  return [...new Set(values)]
 }
 
 function getCategoryValue(element) {
-  return normalizeCategory(getExplicitCategory(element) || getCategoryText(element))
+  return normalizeCategory(getExplicitCategories(element)[0] || getCategoryText(element))
+}
+
+function getCategoryValues(element) {
+  const explicitCategories = getExplicitCategories(element)
+
+  if (explicitCategories.length) return explicitCategories
+
+  return splitCategoryValue(getCategoryText(element))
 }
 
 function getCategoryControl(element) {
@@ -95,10 +122,14 @@ export function initProjectList(root = document) {
   const flipTargets = [...items, ...frames.filter(Boolean)]
   const cTextGroups = items.map((item) => gsap.utils.toArray(SELECTORS.cText, item))
   const originalTabIndexes = links.map((link) => link.getAttribute('tabindex'))
-  const linkCategories = links.map((link, index) => (
-    getCategoryValue(link)
-    || getCategoryValue(items[index])
-  ))
+  const linkCategories = links.map((link, index) => {
+    const categories = [
+      ...getCategoryValues(link),
+      ...getCategoryValues(items[index]),
+    ]
+
+    return [...new Set(categories)]
+  })
   const categoryTriggers = gsap.utils.toArray(SELECTORS.category, root)
     .filter((trigger) => !links.some((link) => link === trigger || link.contains(trigger) || trigger.contains(link)))
     .filter((trigger) => !items.some((item) => item === trigger || item.contains(trigger) || trigger.contains(item)))
@@ -188,7 +219,7 @@ export function initProjectList(root = document) {
     }
 
     links.forEach((link, index) => {
-      const isActive = isAll || linkCategories[index] === category
+      const isActive = isAll || linkCategories[index].includes(category)
       const item = items[index]
       const frame = frames[index]
       const isMobile = isMobileFilterLayout()
@@ -273,7 +304,7 @@ export function initProjectList(root = document) {
     const inactiveTexts = []
 
     cTextGroups.forEach((texts, index) => {
-      if (isAll || linkCategories[index] === category) {
+      if (isAll || linkCategories[index].includes(category)) {
         activeTexts.push(...texts)
       } else {
         inactiveTexts.push(...texts)
