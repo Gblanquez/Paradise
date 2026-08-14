@@ -83,14 +83,24 @@ export function initAboutSection(root = document) {
   const section = root.querySelector(SELECTORS.section) || document.querySelector(SELECTORS.section)
   const imageWraps = section ? gsap.utils.toArray(SELECTORS.imageWrap, section) : []
   const imageItems = imageWraps.flatMap((wrap) => gsap.utils.toArray(wrap.children))
-  const logoWrapper = section?.querySelector(SELECTORS.logoWrapper)
-  const logoList = logoWrapper?.querySelector(SELECTORS.logoList)
-  const logoItems = logoList ? gsap.utils.toArray(SELECTORS.logoItem, logoList) : []
+  const logoWrappers = gsap.utils.toArray(SELECTORS.logoWrapper, root)
+  const logoLoops = logoWrappers
+    .map((wrapper) => {
+      const list = wrapper.querySelector(SELECTORS.logoList)
+      const items = list ? gsap.utils.toArray(SELECTORS.logoItem, list) : []
 
-  if (!section || (!imageWraps.length && !logoItems.length)) return () => {}
+      return {
+        wrapper,
+        list,
+        items,
+        timeline: null,
+      }
+    })
+    .filter(({ list, items }) => list && items.length)
+
+  if ((!section || !imageWraps.length) && !logoLoops.length) return () => {}
 
   let imageTimeline = null
-  let logoTimeline = null
   let resizeTimeout = null
   let lastWindowWidth = window.innerWidth
 
@@ -125,29 +135,32 @@ export function initAboutSection(root = document) {
   }
 
   const createLogoLoop = () => {
-    logoTimeline?.kill()
+    logoLoops.forEach((loop) => {
+      loop.timeline?.kill()
+      loop.timeline = null
 
-    if (!logoItems.length) return
+      if (loop.items.length < 2) return
 
-    gsap.set(logoWrapper, {
-      overflow: 'hidden',
-    })
+      gsap.set(loop.wrapper, {
+        overflow: 'hidden',
+      })
 
-    gsap.set(logoList, {
-      display: 'flex',
-      flexWrap: 'nowrap',
-      alignItems: 'center',
-      willChange: 'transform',
-    })
+      gsap.set(loop.list, {
+        display: 'flex',
+        flexWrap: 'nowrap',
+        alignItems: 'center',
+        willChange: 'transform',
+      })
 
-    gsap.set(logoItems, {
-      flexShrink: 0,
-      willChange: 'transform',
-    })
+      gsap.set(loop.items, {
+        flexShrink: 0,
+        willChange: 'transform',
+      })
 
-    logoTimeline = horizontalLoop(logoItems, {
-      speed: 0.7,
-      paddingRight: 0,
+      loop.timeline = horizontalLoop(loop.items, {
+        speed: 0.7,
+        paddingRight: 0,
+      })
     })
   }
 
@@ -181,11 +194,13 @@ export function initAboutSection(root = document) {
     removeScrollListener()
     imageTimeline?.scrollTrigger?.kill()
     imageTimeline?.kill()
-    logoTimeline?.kill()
+    logoLoops.forEach((loop) => {
+      loop.timeline?.kill()
+      gsap.set(loop.wrapper, { clearProps: 'overflow' })
+      gsap.set(loop.list, { clearProps: 'display,flexWrap,alignItems,willChange,transform' })
+      gsap.set(loop.items, { clearProps: 'x,xPercent,flexShrink,willChange' })
+    })
     gsap.set(imageWraps, { clearProps: 'clipPath,transform,transformOrigin,willChange' })
     gsap.set(imageItems, { clearProps: 'transform' })
-    gsap.set(logoWrapper, { clearProps: 'overflow' })
-    gsap.set(logoList, { clearProps: 'display,flexWrap,alignItems,willChange,transform' })
-    gsap.set(logoItems, { clearProps: 'x,xPercent,flexShrink,willChange' })
   }
 }
