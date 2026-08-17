@@ -79,10 +79,7 @@ function getVideoScope(video, root) {
   let element = video.parentElement
 
   while (element && element !== root && element !== document.body) {
-    if (
-      element.querySelector(SELECTORS.line)
-      && element.querySelector(SELECTORS.playToggleParent)
-    ) {
+    if (element.querySelector(SELECTORS.videoContainer) || element.querySelector(SELECTORS.video)) {
       return element
     }
 
@@ -101,7 +98,7 @@ function createInfoVideo(video, root, pauseOthers) {
   const playToggle = scope?.querySelector(SELECTORS.playToggle)
   const mobileArrow = scope?.querySelector(SELECTORS.mobileArrow)
 
-  if (!scope || !line) return null
+  if (!scope) return null
 
   let loadTween = null
   let lineTween = null
@@ -185,6 +182,14 @@ function createInfoVideo(video, root, pauseOthers) {
     syncToggleLabel()
   }
 
+  const autoplay = () => {
+    if (!video.autoplay && !video.hasAttribute('autoplay')) return
+
+    video.playsInline = true
+    video.setAttribute('playsinline', '')
+    video.play().catch(() => {})
+  }
+
   const playWithSound = () => {
     video.muted = false
     video.volume = 1
@@ -265,16 +270,17 @@ function createInfoVideo(video, root, pauseOthers) {
     loadAndPlay()
   }
 
-  video.pause()
-  video.preload = 'auto'
   video.playsInline = true
   video.setAttribute('playsinline', '')
-  resetLine()
-  syncToggleLabel()
+  if (line) {
+    resetLine()
+  }
 
-  gsap.set(playToggleParent, {
-    opacity: 0,
-  })
+  if (playToggleParent) {
+    gsap.set(playToggleParent, {
+      opacity: 0,
+    })
+  }
 
   if (videoContainer) {
     gsap.set(videoContainer, {
@@ -313,13 +319,13 @@ function createInfoVideo(video, root, pauseOthers) {
     })
   }
 
-  scope.addEventListener('click', handleClick)
-  if (supportsHover) {
-    scope.addEventListener('pointerenter', showToggle)
-    scope.addEventListener('pointerleave', hideToggle)
-  }
-  video.addEventListener('play', syncToggleLabel)
-  video.addEventListener('pause', syncToggleLabel)
+  afterInitialLoad(() => {
+    window.requestAnimationFrame(() => {
+      if (isDestroyed) return
+
+      autoplay()
+    })
+  })
 
   return {
     video,
@@ -327,20 +333,19 @@ function createInfoVideo(video, root, pauseOthers) {
     destroy: () => {
       isDestroyed = true
       pause()
-      scope.removeEventListener('click', handleClick)
-      if (supportsHover) {
-        scope.removeEventListener('pointerenter', showToggle)
-        scope.removeEventListener('pointerleave', hideToggle)
-      }
-      video.removeEventListener('play', syncToggleLabel)
-      video.removeEventListener('pause', syncToggleLabel)
       loadTween?.kill()
       lineTween?.kill()
       revealTween?.scrollTrigger?.kill()
       revealTween?.kill()
-      gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
-      gsap.set(playToggleParent, { clearProps: 'opacity' })
-      gsap.set(mobileArrow, { clearProps: 'opacity,visibility' })
+      if (line) {
+        gsap.set(line, { clearProps: 'width,scaleX,transformOrigin' })
+      }
+      if (playToggleParent) {
+        gsap.set(playToggleParent, { clearProps: 'opacity' })
+      }
+      if (mobileArrow) {
+        gsap.set(mobileArrow, { clearProps: 'opacity,visibility' })
+      }
       if (videoContainer) {
         gsap.set(videoContainer, { clearProps: 'overflow,clipPath,transform,transformOrigin,willChange,--mask-x,--mask-y,--mask-radius' })
       }

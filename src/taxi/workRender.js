@@ -30,11 +30,34 @@ function initProjectVideos(root = document) {
 
   if (!videos.length) return () => {}
 
+  const hasVideoSource = (video) => {
+    const directSource = video.getAttribute('src')?.trim()
+    const childSource = Array.from(video.querySelectorAll('source'))
+      .some((source) => source.getAttribute('src')?.trim())
+
+    return Boolean(directSource || childSource)
+  }
+
   const removeListeners = videos.map((video) => {
+    const hadControls = video.hasAttribute('controls')
     const playVideo = () => {
       video.play?.().catch(() => {})
     }
 
+    if (!hasVideoSource(video)) {
+      video.controls = false
+      video.removeAttribute('controls')
+
+      return () => {
+        if (hadControls) {
+          video.controls = true
+          video.setAttribute('controls', '')
+        }
+      }
+    }
+
+    video.controls = true
+    video.setAttribute('controls', '')
     video.autoplay = true
     video.playsInline = true
     video.setAttribute('autoplay', '')
