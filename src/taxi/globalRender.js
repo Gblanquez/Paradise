@@ -3,6 +3,8 @@ import { initAlwaysSlider } from '../components/alwaysSlider.js'
 import { initAboutSection } from '../components/aboutSection.js'
 import bodyTextReveal from '../components/bodyText.js'
 import { initCta } from '../components/cta.js'
+import { initExpertiseAnimation } from '../components/expertiseAnimation.js'
+import { initExpertiseLinkAnimation } from '../components/expertiseLinkAnimation.js'
 import { initFooter } from '../components/footer.js'
 import { initGlobalLink } from '../components/globalLink.js'
 import { initHeroSection } from '../components/heroSection.js'
@@ -18,6 +20,7 @@ import { initScaling } from '../components/scaling.js'
 import { scrollToHash, scrollToTop, startRAF } from '../components/scroll.js'
 import { initShowcaseSection } from '../components/showcaseSection.js'
 import { initTalent } from '../components/talent.js'
+import { initTeamHoverAnimation } from '../components/teamHoverAnimation.js'
 import { initWorkCarrousel } from '../components/workCarrousel.js'
 import { initTeamCarrousel } from '../components/teamCarrousel.js'
 import { initWhySection } from '../components/whySection.js'
@@ -28,6 +31,7 @@ export default class globalRender extends Renderer {
   destroyAboutSection = () => {}
   destroyShowcaseSection = () => {}
   destroyTalent = () => {}
+  destroyTeamHoverAnimation = () => {}
   destroyWhySection = () => {}
   destroyWorkCarrousel = () => {}
   destroyFooter = () => {}
@@ -41,6 +45,8 @@ export default class globalRender extends Renderer {
   destroyNavbarView = () => {}
   destroyReel = () => {}
   destroyCta = () => {}
+  destroyExpertiseAnimation = () => {}
+  destroyExpertiseLinkAnimation = () => {}
   destroyLines = () => {}
   destroyMask = () => {}
   destroyLoadAnimation = () => {}
@@ -56,6 +62,7 @@ export default class globalRender extends Renderer {
     this.destroyReel = initReel(document).destroy
     this.destroyCta = initCta(this.content)
     this.destroyLinkHover = initLinkHover(this.content)
+    this.destroyExpertiseLinkAnimation = initExpertiseLinkAnimation(document)
     this.destroyLoadAnimation = initLoadAnimation(this.content)
     this.destroyFooter = initFooter(this.content)
     prepareAnimationStates(this.content)
@@ -84,7 +91,9 @@ export default class globalRender extends Renderer {
       this.destroyAboutSection = initAboutSection(this.content)
       this.destroyShowcaseSection = initShowcaseSection(this.content)
       this.destroyTalent = initTalent(this.content)
+      this.destroyTeamHoverAnimation = initTeamHoverAnimation(this.content)
       this.destroyWhySection = initWhySection(this.content)
+      this.destroyExpertiseAnimation = initExpertiseAnimation(this.content)
     //   this.destroyWorkCarrousel = initWorkCarrousel(this.content)
       this.destroyLines = initLines(this.content)
       this.destroyMask = initMask(this.content)
@@ -127,6 +136,8 @@ export default class globalRender extends Renderer {
     this.destroyShowcaseSection = () => {}
     this.destroyTalent()
     this.destroyTalent = () => {}
+    this.destroyTeamHoverAnimation()
+    this.destroyTeamHoverAnimation = () => {}
     this.destroyWhySection()
     this.destroyWhySection = () => {}
     // this.destroyWorkCarrousel({ preserveStyles: true })
@@ -153,6 +164,10 @@ export default class globalRender extends Renderer {
     this.destroyReel = () => {}
     this.destroyCta()
     this.destroyCta = () => {}
+    this.destroyExpertiseAnimation()
+    this.destroyExpertiseAnimation = () => {}
+    this.destroyExpertiseLinkAnimation()
+    this.destroyExpertiseLinkAnimation = () => {}
     this.destroyLines()
     this.destroyLines = () => {}
     this.destroyMask()

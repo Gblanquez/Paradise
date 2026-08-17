@@ -17,6 +17,7 @@ const SELECTORS = {
 }
 
 const MOBILE_FILTER_QUERY = '(max-width: 780px)'
+const PENDING_PROJECT_CATEGORY_KEY = 'pendingProjectCategory'
 
 function normalizeCategory(text) {
   return text.replace(/\s+/g, ' ').trim().toLowerCase()
@@ -91,6 +92,18 @@ function getCategoryLines(trigger, control) {
 
 function notifyProjectsLayoutReady() {
   window.dispatchEvent(new CustomEvent('projects:layout-ready'))
+}
+
+function getPendingProjectCategory() {
+  const value = window.sessionStorage.getItem(PENDING_PROJECT_CATEGORY_KEY)
+  const params = new URLSearchParams(window.location.search)
+  const queryValue = params.get('category') || params.get('filter')
+
+  if (value) {
+    window.sessionStorage.removeItem(PENDING_PROJECT_CATEGORY_KEY)
+  }
+
+  return normalizeCategory(value || queryValue || '')
 }
 
 function setStyle(element, property, value, priority = '') {
@@ -456,7 +469,12 @@ export function initProjectList(root = document) {
     transformOrigin: 'left center',
   })
 
-  setCategoryState('all', true)
+  const pendingCategory = getPendingProjectCategory()
+  const initialCategory = pendingCategory && linkCategories.some((categories) => categories.includes(pendingCategory))
+    ? pendingCategory
+    : 'all'
+
+  setCategoryState(initialCategory, true)
   mobileFilterMedia.addEventListener?.('change', handleFilterBreakpointChange)
 
   return () => {
