@@ -15,29 +15,33 @@ export function initExpertiseAnimation(root = document) {
 
   if (!triggers.length || !allImages.length) return () => {}
 
+  gsap.set(allImages, {
+    '--expertise-mask-x': '50%',
+    '--expertise-mask-y': '50%',
+    clipPath: 'inset(var(--expertise-mask-y) var(--expertise-mask-x) var(--expertise-mask-y) var(--expertise-mask-x))',
+    webkitClipPath: 'inset(var(--expertise-mask-y) var(--expertise-mask-x) var(--expertise-mask-y) var(--expertise-mask-x))',
+    transformOrigin: 'center center',
+    willChange: 'clip-path,-webkit-clip-path',
+  })
+
   const instances = triggers.map((trigger) => {
+    const images = gsap.utils.toArray(SELECTORS.image, trigger)
+
+    if (!images.length) return null
+
     let enterTween = null
     let leaveTween = null
-
-    gsap.set(allImages, {
-      '--expertise-mask-x': '50%',
-      '--expertise-mask-y': '50%',
-      clipPath: 'inset(var(--expertise-mask-y) var(--expertise-mask-x) var(--expertise-mask-y) var(--expertise-mask-x))',
-      webkitClipPath: 'inset(var(--expertise-mask-y) var(--expertise-mask-x) var(--expertise-mask-y) var(--expertise-mask-x))',
-      transformOrigin: 'center center',
-      willChange: 'clip-path,-webkit-clip-path',
-    })
 
     const enter = () => {
       leaveTween?.kill()
       enterTween?.kill()
 
-      gsap.set(allImages, {
+      gsap.set(images, {
         '--expertise-mask-x': '50%',
         '--expertise-mask-y': '50%',
       })
 
-      enterTween = gsap.to(allImages, {
+      enterTween = gsap.to(images, {
         '--expertise-mask-x': '0%',
         '--expertise-mask-y': '0%',
         duration: 1.4,
@@ -51,7 +55,7 @@ export function initExpertiseAnimation(root = document) {
       enterTween?.kill()
       leaveTween?.kill()
 
-      leaveTween = gsap.to(allImages, {
+      leaveTween = gsap.to(images, {
         '--expertise-mask-x': '50%',
         '--expertise-mask-y': '50%',
         duration: 1.2,
@@ -73,9 +77,6 @@ export function initExpertiseAnimation(root = document) {
       trigger.removeEventListener('pointerleave', leave)
       trigger.removeEventListener('focus', enter)
       trigger.removeEventListener('blur', leave)
-      gsap.set(allImages, {
-        clearProps: '--expertise-mask-x,--expertise-mask-y,clipPath,webkitClipPath,transformOrigin,willChange',
-      })
     }
   }).filter(Boolean)
 
@@ -83,5 +84,8 @@ export function initExpertiseAnimation(root = document) {
 
   return () => {
     instances.forEach((destroy) => destroy())
+    gsap.set(allImages, {
+      clearProps: '--expertise-mask-x,--expertise-mask-y,clipPath,webkitClipPath,transformOrigin,willChange',
+    })
   }
 }
